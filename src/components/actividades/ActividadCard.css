@@ -1,0 +1,154 @@
+.actividad-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.actividad-card__header {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+}
+
+.actividad-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.actividad-card__icon svg {
+  width: 22px;
+  height: 22px;
+  color: var(--color-text-inverse);
+}
+
+.actividad-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.actividad-card__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: 4px;
+}
+
+.actividad-card__tipo {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.actividad-card__descripcion {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.actividad-card__details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.actividad-card__detail {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.actividad-card__detail svg {
+  width: 16px;
+  height: 16px;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.actividad-card__costo {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.actividad-card__costo-ha {
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.actividad-card__productos {
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-secondary);
+}
+
+.actividad-card__productos h5 {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.actividad-card__producto {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-xs) 0;
+}
+
+.actividad-card__producto-nombre {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.actividad-card__producto-dosis {
+  color: var(--color-text-secondary);
+}
+
+.actividad-card__producto-plazo {
+  margin-left: auto;
+  padding: 2px var(--spacing-sm);
+  background-color: var(--color-warning);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.actividad-card__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 640px) {
+  .actividad-card__title-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .actividad-card__details {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .actividad-card__actions {
+    flex-direction: column;
+  }
+  
+  .actividad-card__actions button {
+    width: 100%;
+  }
+}

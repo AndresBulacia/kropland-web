@@ -1,0 +1,298 @@
+.inicio-page {
+  max-width: 1600px;
+  margin: 0 auto;
+  animation: fadeIn var(--transition-base);
+}
+
+/* Welcome section */
+.inicio-page__welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-inverse);
+}
+
+.inicio-page__title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.inicio-page__subtitle {
+  font-size: var(--font-size-base);
+  margin: 0;
+  opacity: 0.9;
+}
+
+.inicio-page__date {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+}
+
+.inicio-page__date svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Stats grid */
+.inicio-page__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* Content layout */
+.inicio-page__content {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.inicio-page__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.inicio-page__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* Visitas */
+.inicio-page__visitas {
+  display: flex;
+  flex-direction: column;
+}
+
+.visita-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color var(--transition-fast);
+}
+
+.visita-item:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.visita-item:last-of-type {
+  border-bottom: none;
+}
+
+.visita-item__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.visita-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: 4px;
+}
+
+.visita-item__header h4 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.visita-item__finca {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0 0 4px 0;
+}
+
+.visita-item__fecha {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.visita-item__fecha svg {
+  width: 14px;
+  height: 14px;
+}
+
+.inicio-page__visitas-footer {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--color-bg-secondary);
+}
+
+/* Resumen económico */
+.resumen-economico {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.resumen-economico__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.resumen-economico__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.resumen-economico__value {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.resumen-economico__value--primary {
+  color: var(--color-secondary);
+}
+
+.resumen-economico__value--error {
+  color: var(--color-error);
+}
+
+.resumen-economico__value--warning {
+  color: var(--color-warning);
+}
+
+/* Quick actions */
+.inicio-page__quick-actions {
+  margin-bottom: var(--spacing-xl);
+}
+
+.inicio-page__quick-actions h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.inicio-page__actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.quick-action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  color: var(--color-text-primary);
+}
+
+.quick-action-card:hover {
+  border-color: var(--color-secondary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.quick-action-card svg {
+  width: 40px;
+  height: 40px;
+  color: var(--color-secondary);
+}
+
+.quick-action-card span {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Loading */
+.inicio-page__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+  gap: var(--spacing-md);
+}
+
+.inicio-page__loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-secondary);
+  border-radius: var(--radius-full);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .inicio-page__content {
+    grid-template-columns: 1fr;
+  }
+  
+  .inicio-page__sidebar {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .inicio-page__welcome {
+    flex-direction: column;
+  }
+  
+  .inicio-page__date {
+    align-self: flex-start;
+  }
+  
+  .inicio-page__stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .inicio-page__actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .inicio-page__title {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .inicio-page__actions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .visita-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .visita-item button {
+    align-self: stretch;
+  }
+}

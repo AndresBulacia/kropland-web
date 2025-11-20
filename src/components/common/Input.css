@@ -1,0 +1,124 @@
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.input-wrapper--full-width {
+  width: 100%;
+}
+
+.input-wrapper--error .input__field {
+  border-color: var(--color-error);
+}
+
+.input-wrapper--error .input__field:focus {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.input__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.input__container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input__icon {
+  position: absolute;
+  left: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.input__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.input-wrapper--with-icon .input__field {
+  padding-left: calc(var(--spacing-md) + 28px);
+}
+
+.input__field {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.input__field:focus {
+  outline: none;
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.1);
+}
+
+.input__field:disabled {
+  background-color: var(--color-bg-tertiary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.input__field::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+/* Textarea */
+.input__field--textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+/* Select */
+.input__field--select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: calc(var(--spacing-md) + 24px);
+}
+
+.input__select-icon {
+  position: absolute;
+  right: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.input__select-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Helper text */
+.input__helper {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.input__helper--error {
+  color: var(--color-error);
+}
+
+@media (max-width: 640px) {
+  .input__field {
+    font-size: var(--font-size-sm);
+  }
+}

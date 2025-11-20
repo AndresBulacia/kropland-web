@@ -1,0 +1,94 @@
+:root{
+ /* Colores principales */
+ --color-primary: #193C1E;
+ --color-primary-dark: #0F2814;
+ --color-primary-light: #2D5A36;
+ --color-secondary: #00A859;
+ --color-secondary-dark: #008A49;
+ --color-secondary-light: #00C266;
+
+ /* Fondos */
+ --color-bg-primary: #FFFFFF;
+ --color-bg-secondary: #F5FFF9;
+ --color-bg-tertiary: #E8F5EC;
+
+ /* Textos */
+ --color-text-primary: #1E1E1E;
+ --color-text-secondary: #666666;
+ --color-text-tertiary: #999999;
+ --color-text-inverse: #FFFFFF;
+
+ /* Estados */
+ --color-success: #00A859;
+ --color-warning: #F59E0B;
+ --color-error: #EF4444;
+ --color-info: #3B82F6;
+
+ /* Bordes */
+ --color-border: #E5E7EB;
+ --color-border-dark: #D1D5DB;
+
+ /* Sombras */
+ --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+ --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+ --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+ --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+ /* Espaciado */
+ --spacing-xs: 0.25rem;
+ --spacing-sm: 0.5rem;
+ --spacing-md: 1rem;
+ --spacing-lg: 1.5rem;
+ --spacing-xl: 2rem;
+ --spacing-2xl: 3rem;
+
+ /* Border redondeados */
+ --radius-sm: 0.25rem;
+ --radius-md: 0.5rem;
+ --radius-lg: 0.75rem;
+ --radius-xl: 1rem;
+ --radius-full: 9999px;
+
+ /* Tipografía */
+ --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+ --font-size-xs: 0.75rem;
+ --font-size-sm: 0.875rem;
+ --font-size-base: 1rem;
+ --font-size-lg: 1.125rem;
+ --font-size-xl: 1.25rem;
+ --font-size-2xl: 1.5rem;
+ --font-size-3xl: 1.875rem;
+
+ /* Pesos de fuente */
+ --font-weight-normal: 400;
+ --font-weight-medium: 500;
+ --font-weight-semibold: 600;
+ --font-weight-bold: 700;
+
+ /* Transiciones */
+ --transition-fast: 150ms ease-in-out;
+ --transition-base: 250ms ease-in-out;
+ --transition-slow: 350ms ease-in-out;
+
+ /* Breakpoints (para referencias en JS) */
+ --breakpoint-sm: 640px;
+ --breakpoint-md: 768px;
+ --breakpoint-lg: 1024px;
+ --breakpoint-xl: 1280px;
+
+ /* Z-index layers */
+ --z-dropdown: 1000;
+ --z-sticky: 1020;
+ --z-fixed: 1030;
+ --z-modal-backdrop: 1040;
+ --z-modal: 1050;
+ --z-popover: 1060;
+ --z-tooltip: 1070;
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+   :root {
+       
+   }
+}
