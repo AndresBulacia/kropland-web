@@ -1,7 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { addToSyncQueue, deleteItem, getData, initDB, putItem, saveData } from '../lib/db';
+import { DEMO_FINCAS } from '../lib/demoData';
 import type { Finca, FiltrosFinca } from '../types';
 
 const STORAGE_KEY = 'kropland_fincas';
+
+const persistUIFallback = (fincasActualizadas: Finca[]) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(fincasActualizadas));
+};
 
 export const useFincas = () => {
   const [fincas, setFincas] = useState<Finca[]>([]);
@@ -9,127 +15,100 @@ export const useFincas = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setFincas(parsed);
-      } else {
-        // Datos de ejemplo
-        const fincasEjemplo: Finca[] = [
-          {
-            id: '1',
-            clienteId: '1',
-            nombre: 'El Olivar',
-            cultivo: 'Olivo',
-            variedad: 'Picual',
-            portainjerto: 'Frantoio',
-            superficie: 12.5,
-            volumenCaldoPorHa: 800,
-            añoPlantacion: 2015,
-            tipoRiego: 'Regadío',
-            ubicacion: {
-              direccion: 'Camino de la Vega, Ciudad Real',
-              latitud: 38.9848,
-              longitud: -3.9271
-            },
-            notas: 'Producción en ecológico',
-            fechaCreacion: '2020-01-15',
-            activa: true
-          },
-          {
-            id: '2',
-            clienteId: '2',
-            nombre: 'Los Almendros',
-            cultivo: 'Almendro',
-            variedad: 'Guara',
-            superficie: 8.3,
-            volumenCaldoPorHa: 600,
-            añoPlantacion: 2018,
-            tipoRiego: 'Secano',
-            ubicacion: {
-              direccion: 'Paraje Las Lomas, Jaén',
-              latitud: 37.7796,
-              longitud: -3.7849
-            },
-            fechaCreacion: '2021-03-20',
-            activa: true
-          },
-          {
-            id: '3',
-            clienteId: '3',
-            nombre: 'La Viña Grande',
-            cultivo: 'Viña',
-            variedad: 'Tempranillo',
-            portainjerto: 'R110',
-            superficie: 5.2,
-            volumenCaldoPorHa: 400,
-            añoPlantacion: 2012,
-            tipoRiego: 'Regadío',
-            ubicacion: {
-              direccion: 'Sierra de Córdoba',
-              latitud: 37.8882,
-              longitud: -4.7794
-            },
-            notas: 'DOC Montilla-Moriles',
-            fechaCreacion: '2019-11-10',
-            activa: true
-          }
-        ];
-        setFincas(fincasEjemplo);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(fincasEjemplo));
+    let mounted = true;
+
+    const cargarFincas = async () => {
+      try {
+        setLoading(true);
+        await initDB();
+        let data = await getData('fincas');
+
+        if (data.length === 0) {
+          data = DEMO_FINCAS;
+          await saveData('fincas', data);
+        }
+
+        if (mounted) {
+          setFincas(data);
+          persistUIFallback(data);
+        }
+      } catch (err) {
+        console.error(err);
+        if (mounted) setError('Error al cargar las fincas');
+      } finally {
+        if (mounted) setLoading(false);
       }
-    } catch (err) {
-      setError('Error al cargar las fincas');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    void cargarFincas();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const saveToStorage = (fincasActualizadas: Finca[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(fincasActualizadas));
-      setFincas(fincasActualizadas);
-    } catch (err) {
-      setError('Error al guardar los cambios');
-      console.error(err);
-    }
-  };
+  const persist = useCallback(async (fincasActualizadas: Finca[]) => {
+    await saveData('fincas', fincasActualizadas);
+    setFincas(fincasActualizadas);
+    persistUIFallback(fincasActualizadas);
+  }, []);
 
-  const crearFinca = (nuevaFinca: Omit<Finca, 'id' | 'fechaCreacion'>) => {
+  const crearFinca = useCallback(async (nuevaFinca: Omit<Finca, 'id' | 'fechaCreacion'>) => {
     const finca: Finca = {
       ...nuevaFinca,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       fechaCreacion: new Date().toISOString().split('T')[0],
     };
     
     const fincasActualizadas = [...fincas, finca];
-    saveToStorage(fincasActualizadas);
-    return finca;
-  };
+    await persist(fincasActualizadas);
+    await putItem('fincas', finca);
 
-  const actualizarFinca = (id: string, datosActualizados: Partial<Finca>) => {
+    if (!navigator.onLine) {
+      await addToSyncQueue('create', 'fincas', finca);
+    }
+
+    return finca;
+  }, [fincas, persist]);
+
+  const actualizarFinca = useCallback(async (id: string, datosActualizados: Partial<Finca>) => {
     const fincasActualizadas = fincas.map(finca =>
       finca.id === id ? { ...finca, ...datosActualizados } : finca
     );
-    saveToStorage(fincasActualizadas);
-  };
 
-  const eliminarFinca = (id: string) => {
+    await persist(fincasActualizadas);
+
+    const fincaActualizada = fincasActualizadas.find(f => f.id === id);
+    if (fincaActualizada) {
+      await putItem('fincas', fincaActualizada);
+    }
+
+    if (!navigator.onLine) {
+      await addToSyncQueue('update', 'fincas', { id, cambios: datosActualizados });
+    }
+  }, [fincas, persist]);
+
+  const eliminarFinca = useCallback(async (id: string) => {
     const fincasActualizadas = fincas.filter(finca => finca.id !== id);
-    saveToStorage(fincasActualizadas);
-  };
 
-  const obtenerFinca = (id: string): Finca | undefined => {
+    await persist(fincasActualizadas);
+    await deleteItem('fincas', id);
+
+    if (!navigator.onLine) {
+      await addToSyncQueue('delete', 'fincas', { id });
+    }
+  }, [fincas, persist]);
+
+  const obtenerFinca = useCallback((id: string): Finca | undefined => {
     return fincas.find(finca => finca.id === id);
-  };
+  }, [fincas]);
 
-  const obtenerFincasPorCliente = (clienteId: string): Finca[] => {
+  const obtenerFincasPorCliente = useCallback((clienteId: string): Finca[] => {
     return fincas.filter(finca => finca.clienteId === clienteId);
-  };
+  
+  }, [fincas]);
 
-  const filtrarFincas = (filtros: FiltrosFinca): Finca[] => {
+  const filtrarFincas = useCallback((filtros: FiltrosFinca): Finca[] => {
     let resultado = [...fincas];
 
     if (filtros.busqueda) {
@@ -158,15 +137,15 @@ export const useFincas = () => {
     }
 
     return resultado;
-  };
+  }, [fincas]);
 
-  const calcularSuperficieTotal = (clienteId?: string): number => {
-    const fincasACalcular = clienteId 
+  const calcularSuperficieTotal = useCallback((clienteId?: string): number => {
+    const fincasACalcular = clienteId
       ? fincas.filter(f => f.clienteId === clienteId)
       : fincas;
     
     return fincasACalcular.reduce((total, finca) => total + finca.superficie, 0);
-  };
+  }, [fincas]);
 
   return {
     fincas,

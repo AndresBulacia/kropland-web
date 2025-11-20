@@ -1,4 +1,6 @@
-import { initDB, getData, saveData, getSyncQueue, clearSyncQueue } from './db';
+import { initDB, saveData, getSyncQueue, clearSyncQueue } from './db';
+import { mockApi } from '../api/mock';
+import type { Cliente, Finca, Visita } from '../types';
 
 export interface OfflineState {
   isOnline: boolean;
@@ -16,23 +18,29 @@ let offlineState: OfflineState = {
 
 const listeners: Array<(state: OfflineState) => void> = [];
 
+// Notificar cambios
+const notifyListeners = () => {
+  listeners.forEach(callback => callback(offlineState));
+};
+
+const updateOfflineState = (updates: Partial<OfflineState>) => {
+  offlineState = { ...offlineState, ...updates };
+  notifyListeners();
+};
+
 // Registrar listener para cambios de estado
 export const subscribeToOfflineState = (callback: (state: OfflineState) => void) => {
   listeners.push(callback);
   // Llamar inmediatamente con el estado actual
   callback(offlineState);
   
+
   return () => {
     const index = listeners.indexOf(callback);
     if (index > -1) {
       listeners.splice(index, 1);
     }
   };
-};
-
-// Notificar cambios
-const notifyListeners = () => {
-  listeners.forEach(callback => callback(offlineState));
 };
 
 // Obtener estado actual
@@ -43,25 +51,23 @@ export const initOfflineDetection = () => {
   // Detectar cambios de conexión
   window.addEventListener('online', () => {
     console.log('🟢 Conexión restaurada');
-    offlineState.isOnline = true;
-    notifyListeners();
     
+    updateOfflineState({ isOnline: true });
+
     // Auto-sincronizar cuando vuelve la conexión
     syncData();
   });
 
   window.addEventListener('offline', () => {
     console.log('🔴 Conexión perdida');
-    offlineState.isOnline = false;
-    notifyListeners();
+    updateOfflineState({ isOnline: false });
   });
 
   // Verificar conexión periódicamente
   setInterval(() => {
     const newStatus = navigator.onLine;
     if (newStatus !== offlineState.isOnline) {
-      offlineState.isOnline = newStatus;
-      notifyListeners();
+      updateOfflineState({ isOnline: newStatus });
     }
   }, 3000);
 
@@ -80,57 +86,94 @@ export const syncData = async () => {
     return;
   }
 
-  offlineState.isSyncing = true;
-  offlineState.syncError = null;
-  notifyListeners();
+  updateOfflineState({ isSyncing: true, syncError: null });
 
   try {
-    // Obtener datos de la API
-    console.log('📥 Descargando datos del servidor...');
     
-    const [clientes, fincas, visitas] = await Promise.all([
-      fetch('/api/clientes').then(r => r.json()).catch(() => []),
-      fetch('/api/fincas').then(r => r.json()).catch(() => []),
-      fetch('/api/visitas').then(r => r.json()).catch(() => []),
-    ]);
-
-    // Guardar en IndexedDB
     await initDB();
-    if (clientes.length) await saveData('clientes', clientes);
-    if (fincas.length) await saveData('fincas', fincas);
-    if (visitas.length) await saveData('visitas', visitas);
-
-    // Procesar cola de cambios locales
+    // Reproducir la cola local primero para no pisar cambios pendientes
     const syncQueue = await getSyncQueue();
     if (syncQueue.length > 0) {
       console.log(`📤 Sincronizando ${syncQueue.length} cambios locales...`);
       
+      const fallidos: string[] = [];
+
       for (const item of syncQueue) {
         try {
-          // Aquí iría la lógica para enviar cambios al servidor
+          if (item.storeName === 'clientes') {
+            await syncCliente(item.action, item.data as any);
+          } else if (item.storeName === 'fincas') {
+            await syncFinca(item.action, item.data as any);
+          } else if (item.storeName === 'visitas') {
+            await syncVisita(item.action, item.data as any);
+          }
           console.log(`✅ Sincronizado: ${item.action} en ${item.storeName}`);
         } catch (error) {
-          console.error(`❌ Error sincronizando item:`, error);
+          fallidos.push(`${item.storeName}:${item.action}`);
+          console.error(`❌ Error sincronizando item ${item.storeName}/${item.action}:`, error);
         }
       }
       
-      // Limpiar cola después de sincronizar
+      if (fallidos.length > 0) {
+        throw new Error(`No se pudieron sincronizar ${fallidos.length} cambios (${fallidos.join(', ')})`);
+      }
       await clearSyncQueue();
     }
 
-    // Actualizar timestamp de último sync
+    // Descargar snapshot actualizado después de aplicar la cola
+    console.log('📥 Descargando datos del servidor mock...');
+
+    const [clientes, fincas, visitas] = await Promise.all([
+      mockApi.getClientes(),
+      mockApi.getFincas(),
+      mockApi.getVisitas(),
+    ]);
+
+    if (clientes.length) await saveData('clientes', clientes as Cliente[]);
+    if (fincas.length) await saveData('fincas', fincas as Finca[]);
+    if (visitas.length) await saveData('visitas', visitas as Visita[]);
+
     const now = new Date().toISOString();
-    offlineState.lastSync = now;
+    updateOfflineState({ lastSync: now });
     localStorage.setItem('lastSync', now);
 
     console.log('✅ Sincronización completada');
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
-    offlineState.syncError = errorMsg;
+    updateOfflineState({ syncError: errorMsg });
     console.error('❌ Error en sincronización:', errorMsg);
   } finally {
-    offlineState.isSyncing = false;
-    notifyListeners();
+    updateOfflineState({ isSyncing: false });
+  }
+};
+
+const syncCliente = async (action: string, payload: any) => {
+  if (action === 'create') {
+    await mockApi.createCliente(payload as Cliente);
+  } else if (action === 'update') {
+    await mockApi.updateCliente(payload.id, payload.cambios as Partial<Cliente>);
+  } else if (action === 'delete') {
+    await mockApi.deleteCliente(payload.id);
+  }
+};
+
+const syncFinca = async (action: string, payload: any) => {
+  if (action === 'create') {
+    await mockApi.createFinca(payload as Finca);
+  } else if (action === 'update') {
+    await mockApi.updateFinca(payload.id, payload.cambios as Partial<Finca>);
+  } else if (action === 'delete') {
+    await mockApi.deleteFinca(payload.id);
+  }
+};
+
+const syncVisita = async (action: string, payload: any) => {
+  if (action === 'create') {
+    await mockApi.createVisita(payload as Visita);
+  } else if (action === 'update') {
+    await mockApi.updateVisita(payload.id, payload.cambios as Partial<Visita>);
+  } else if (action === 'delete') {
+    await mockApi.deleteVisita(payload.id);
   }
 };
 
@@ -155,15 +198,4 @@ export const registerServiceWorker = async () => {
   if (!('serviceWorker' in navigator)) {
     console.log('⚠️ Service Workers no soportados');
     return;
-  }
-
-  try {
-    const registration = await navigator.serviceWorker.register('/service-worker.js', {
-      scope: '/',
-    });
-    console.log('✅ Service Worker registrado:', registration);
-    return registration;
-  } catch (error) {
-    console.error('❌ Error registrando Service Worker:', error);
-  }
-};
+  }};

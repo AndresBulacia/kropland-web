@@ -1,126 +1,109 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { addToSyncQueue, deleteItem, getData, initDB, putItem, saveData } from '../lib/db';
+import { DEMO_CLIENTES } from '../lib/demoData';
 import { type Cliente, type FiltrosCliente } from '../types';
 
 const STORAGE_KEY = 'kropland_clientes';
+
+const persistUIFallback = (clientesActualizados: Cliente[]) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(clientesActualizados));
+};
 
 export const useClientes = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar clientes del localStorage al montar
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setClientes(parsed);
-      } else {
-        // Datos de ejemplo para desarrollo
-        const clientesEjemplo: Cliente[] = [
-          {
-            id: '1',
-            nombre: 'Juan',
-            apellidos: 'García Martínez',
-            dni: '12345678A',
-            telefono: '600123456',
-            email: 'juan.garcia@email.com',
-            poblacion: 'Ciudad Real',
-            provincia: 'Ciudad Real',
-            comunidadAutonoma: 'Castilla-La Mancha',
-            codigoPostal: '13001',
-            direccion: 'Calle Principal 123',
-            notas: 'Cliente desde 2020',
-            fechaAlta: '2020-01-15',
-            activo: true
-          },
-          {
-            id: '2',
-            nombre: 'María',
-            apellidos: 'López Sánchez',
-            dni: '87654321B',
-            telefono: '600234567',
-            email: 'maria.lopez@email.com',
-            poblacion: 'Jaén',
-            provincia: 'Jaén',
-            comunidadAutonoma: 'Andalucía',
-            codigoPostal: '23001',
-            direccion: 'Avenida Andalucía 45',
-            fechaAlta: '2021-03-20',
-            activo: true
-          },
-          {
-            id: '3',
-            nombre: 'Pedro',
-            apellidos: 'Fernández Ruiz',
-            dni: '11223344C',
-            telefono: '600345678',
-            email: 'pedro.fernandez@email.com',
-            poblacion: 'Córdoba',
-            provincia: 'Córdoba',
-            comunidadAutonoma: 'Andalucía',
-            codigoPostal: '14001',
-            notas: 'Prefiere comunicación por email',
-            fechaAlta: '2019-11-10',
-            activo: true
-          }
-        ];
-        setClientes(clientesEjemplo);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(clientesEjemplo));
+    let mounted = true;
+
+    const cargarClientes = async () => {
+      try {
+        setLoading(true);
+        await initDB();
+        let data = await getData('clientes');
+
+        if (data.length === 0) {
+          data = DEMO_CLIENTES;
+          await saveData('clientes', data);
+        }
+
+        if (mounted) {
+          setClientes(data);
+          persistUIFallback(data);
+        }
+      } catch (err) {
+        console.error(err);
+        if (mounted) setError('Error al cargar los clientes');
+      } finally {
+        if (mounted) setLoading(false);
       }
-    } catch (err) {
-      setError('Error al cargar los clientes');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    };
+    void cargarClientes();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Guardar en localStorage cuando cambian los clientes
-  const saveToStorage = (clientesActualizados: Cliente[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(clientesActualizados));
-      setClientes(clientesActualizados);
-    } catch (err) {
-      setError('Error al guardar los cambios');
-      console.error(err);
-    }
-  };
+  const persist = useCallback(async (clientesActualizados: Cliente[]) => {
+    await saveData('clientes', clientesActualizados);
+    persistUIFallback(clientesActualizados);
+  }, []);
 
-  // Crear cliente
-  const crearCliente = (nuevoCliente: Omit<Cliente, 'id' | 'fechaAlta'>) => {
+  const crearCliente = useCallback(async (nuevoCliente: Omit<Cliente, 'id' | 'fechaAlta'>) => {
     const cliente: Cliente = {
       ...nuevoCliente,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       fechaAlta: new Date().toISOString().split('T')[0],
     };
-    
+
     const clientesActualizados = [...clientes, cliente];
-    saveToStorage(clientesActualizados);
+    await persist(clientesActualizados);
+    await putItem('cliente', cliente);
+
+    if (!navigator.onLine) {
+      await addToSyncQueue('create', 'clientes', cliente);
+    }
     return cliente;
-  };
+  }, [clientes, persist]);
 
   // Actualizar cliente
-  const actualizarCliente = (id: string, datosActualizados: Partial<Cliente>) => {
-    const clientesActualizados = clientes.map(cliente =>
-      cliente.id === id ? { ...cliente, ...datosActualizados } : cliente
-    );
-    saveToStorage(clientesActualizados);
-  };
+  const actualizarCliente = useCallback(async (id: string, datosActualizados: Partial<Cliente>) => {
+    const clientesActualizados = clientes.map(cliente => cliente.id === id ? {...cliente, ...datosActualizados}: cliente);
+
+    await persist(clientesActualizados);
+
+    const clienteActualizado = clientesActualizados.find(c => c.id === id);
+
+    if (clienteActualizado) {
+      await putItem('clientes', clienteActualizado);
+    }
+
+    if (!navigator.onLine) {
+      await addToSyncQueue('update', 'clientes', {id, cambios: datosActualizados});
+    }
+  }, [clientes, persist]);
+
 
   // Eliminar cliente
-  const eliminarCliente = (id: string) => {
-    const clientesActualizados = clientes.filter(cliente => cliente.id !== id);
-    saveToStorage(clientesActualizados);
-  };
+  const eliminarCliente = useCallback(async (id: string) => {
+    const clientesActualizados = clientes.filter(cliente => cliente.id === id);
+
+    await persist(clientesActualizados);
+    await deleteItem('clientes', id);
+
+    if (!navigator.onLine) {
+      await addToSyncQueue('delete', 'clientes', {id});
+    }
+  }, [clientes, persist]);
 
   // Obtener cliente por ID
-  const obtenerCliente = (id: string): Cliente | undefined => {
+  const obtenerCliente = useCallback((id: string): Cliente | undefined => {
     return clientes.find(cliente => cliente.id === id);
-  };
+  }, [clientes]);
 
   // Filtrar clientes
-  const filtrarClientes = (filtros: FiltrosCliente): Cliente[] => {
+  const filtrarClientes = useCallback((filtros: FiltrosCliente): Cliente[] => {
     let resultado = [...clientes];
 
     if (filtros.busqueda) {
@@ -145,26 +128,25 @@ export const useClientes = () => {
     }
 
     return resultado;
-  };
+  }, [clientes]);
 
   // Importar desde CSV
-  const importarDesdeCSV = (csvData: string): { exito: number; errores: number } => {
+  const importarDesdeCSV = useCallback((csvData: string): { exito: number; errores: number } => {
     try {
       const lineas = csvData.split('\n');
       const clientesNuevos: Cliente[] = [];
       let errores = 0;
 
-      // Saltar la primera línea (headers)
       for (let i = 1; i < lineas.length; i++) {
         const linea = lineas[i].trim();
         if (!linea) continue;
 
         const columnas = linea.split(',').map(col => col.trim());
-        
+
         if (columnas.length >= 7) {
           try {
             const cliente: Cliente = {
-              id: Date.now().toString() + i,
+              id: `${Date.now()}-${i}`,
               nombre: columnas[0],
               apellidos: columnas[1],
               dni: columnas[2],
@@ -190,7 +172,7 @@ export const useClientes = () => {
 
       if (clientesNuevos.length > 0) {
         const clientesActualizados = [...clientes, ...clientesNuevos];
-        saveToStorage(clientesActualizados);
+        void persist(clientesActualizados);
       }
 
       return { exito: clientesNuevos.length, errores };
@@ -198,7 +180,7 @@ export const useClientes = () => {
       console.error('Error al importar CSV:', err);
       return { exito: 0, errores: 1 };
     }
-  };
+  }, [clientes, persist]);
 
   return {
     clientes,
@@ -209,6 +191,6 @@ export const useClientes = () => {
     eliminarCliente,
     obtenerCliente,
     filtrarClientes,
-    importarDesdeCSV
+    importarDesdeCSV,
   };
 };
