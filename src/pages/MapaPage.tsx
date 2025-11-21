@@ -107,11 +107,11 @@ export const MapaPage: React.FC = () => {
 
     // Agregar markers
     fincasFiltradas.forEach(finca => {
-      if (finca.latitud && finca.longitud) {
+      if (finca.ubicacion?.latitud && finca.ubicacion?.longitud) {
         const cliente = clientes.find(c => c.id === finca.clienteId);
 
         const marker = L.marker(
-          [finca.latitud, finca.longitud],
+          [finca.ubicacion?.latitud, finca.ubicacion?.longitud],
           { icon: crearIcono(finca.cultivo) }
         ).addTo(mapRef.current!);
 

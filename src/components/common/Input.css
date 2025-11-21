@@ -19,9 +19,10 @@
 
 .input__label {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   cursor: pointer;
+  user-select: none;
 }
 
 .input__container {
@@ -38,6 +39,7 @@
   justify-content: center;
   color: var(--color-text-secondary);
   pointer-events: none;
+  z-index: 1;
 }
 
 .input__icon svg {
@@ -51,13 +53,18 @@
 
 .input__field {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 0.75rem var(--spacing-md);
   font-size: var(--font-size-base);
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
+  box-sizing: border-box;
+  font-family: inherit;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .input__field:focus {
@@ -79,16 +86,21 @@
 /* Textarea */
 .input__field--textarea {
   resize: vertical;
-  min-height: 80px;
+  min-height: 100px;
   font-family: inherit;
   line-height: 1.5;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
 }
 
 /* Select */
 .input__field--select {
   appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   cursor: pointer;
-  padding-right: calc(var(--spacing-md) + 24px);
+  padding-right: calc(var(--spacing-md) + 28px);
+  background-image: none;
 }
 
 .input__select-icon {
@@ -99,6 +111,7 @@
   justify-content: center;
   color: var(--color-text-secondary);
   pointer-events: none;
+  z-index: 1;
 }
 
 .input__select-icon svg {
@@ -111,14 +124,80 @@
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   margin: 0;
+  line-height: 1.4;
 }
 
 .input__helper--error {
   color: var(--color-error);
+  font-weight: var(--font-weight-medium);
 }
 
-@media (max-width: 640px) {
+/* Mejoras para inputs de fecha y hora en mobile */
+.input__field[type="date"],
+.input__field[type="time"],
+.input__field[type="datetime-local"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* Fix para iOS Safari */
+.input__field[type="date"]::-webkit-calendar-picker-indicator,
+.input__field[type="time"]::-webkit-calendar-picker-indicator,
+.input__field[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  background: transparent;
+  bottom: 0;
+  color: transparent;
+  cursor: pointer;
+  height: auto;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: auto;
+}
+
+/* Responsive Mobile */
+@media (max-width: 768px) {
   .input__field {
-    font-size: var(--font-size-sm);
+    font-size: 16px; /* Evita zoom en iOS */
+    padding: 0.85rem var(--spacing-md);
+  }
+  
+  .input__label {
+    font-size: 0.9rem;
+  }
+  
+  .input__field--textarea {
+    min-height: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .input__field {
+    padding: 0.85rem 0.75rem;
+  }
+  
+  .input-wrapper--with-icon .input__field {
+    padding-left: 2.75rem;
+  }
+  
+  .input__icon {
+    left: 0.75rem;
+  }
+  
+  .input__select-icon {
+    right: 0.75rem;
+  }
+  
+  .input__field--select {
+    padding-right: 2.75rem;
+  }
+}
+
+/* Fix para mejor UX en mobile */
+@media (hover: none) and (pointer: coarse) {
+  .input__field:focus {
+    font-size: 16px; /* Evita zoom en iOS */
   }
 }

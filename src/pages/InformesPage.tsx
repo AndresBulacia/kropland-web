@@ -1,18 +1,16 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useClientes } from '../hooks/useClientes';
 import { useFincas } from '../hooks/useFincas';
 import { useVisitas } from '../hooks/useVisitas';
-import { SyncStatus } from '../components/SyncStatus';
 import './InformesPage.css';
 
 export function InformesPage() {
-  const { clientes, loading: loadingClientes, error: errorClientes, syncing: syncingClientes } = useClientes();
-  const { fincas, loading: loadingFincas, error: errorFincas, syncing: syncingFincas } = useFincas();
-  const { visitas, loading: loadingVisitas, error: errorVisitas, syncing: syncingVisitas } = useVisitas();
+  const { clientes, loading: loadingClientes, error: errorClientes } = useClientes();
+  const { fincas, loading: loadingFincas, error: errorFincas } = useFincas();
+  const { visitas, loading: loadingVisitas, error: errorVisitas } = useVisitas();
   const [filtroVisitas, setFiltroVisitas] = useState('todas');
 
   const loading = loadingClientes || loadingFincas || loadingVisitas;
-  const syncing = syncingClientes || syncingFincas || syncingVisitas;
   const error = errorClientes || errorFincas || errorVisitas;
 
   // Filtrar visitas
@@ -24,12 +22,11 @@ export function InformesPage() {
   const stats = {
     totalClientes: clientes.length,
     clientesPorRol: {
-      productores: clientes.filter(c => c.rol === 'productor').length,
-      tecnicos: clientes.filter(c => c.rol === 'tecnico').length,
-      admins: clientes.filter(c => c.rol === 'admin').length,
+      total: clientes.length,
+      activos: clientes.filter(c => c.activo).length,
     },
     totalFincas: fincas.length,
-    hectareasTotal: fincas.reduce((sum, f) => sum + (f.hectareas || 0), 0),
+    hectareasTotal: fincas.reduce((sum, f) => sum + (f.superficie || 0), 0),
     cultivosPrincipales: [...new Set(fincas.map(f => f.cultivo))],
     totalVisitas: visitas.length,
     visitasPorEstado: {
@@ -45,8 +42,7 @@ export function InformesPage() {
     
     csv += 'ESTADÍSTICAS GENERALES\n';
     csv += `Total de Clientes,${stats.totalClientes}\n`;
-    csv += `Productores,${stats.clientesPorRol.productores}\n`;
-    csv += `Técnicos,${stats.clientesPorRol.tecnicos}\n`;
+    csv += `Clientes Activos,${stats.clientesPorRol.activos}\n`;
     csv += `Total de Fincas,${stats.totalFincas}\n`;
     csv += `Hectáreas Totales,${stats.hectareasTotal}\n`;
     csv += `Total de Visitas,${stats.totalVisitas}\n`;
@@ -55,21 +51,21 @@ export function InformesPage() {
     csv += `Visitas Pendientes,${stats.visitasPorEstado.pendientes}\n\n`;
 
     csv += 'CLIENTES\n';
-    csv += 'Nombre,Email,Teléfono,Rol\n';
+    csv += 'Nombre,Apellidos,Email,Teléfono,Provincia\n';
     clientes.forEach(c => {
-      csv += `"${c.nombre}","${c.email}","${c.telefono}","${c.rol}"\n`;
+      csv += `"${c.nombre}","${c.apellidos}","${c.email}","${c.telefono}","${c.provincia}"\n`;
     });
 
     csv += '\nFINCAS\n';
-    csv += 'Nombre,Cultivo,Hectáreas,Ubicación\n';
+    csv += 'Nombre,Cultivo,Superficie (ha),Ubicación\n';
     fincas.forEach(f => {
-      csv += `"${f.nombre}","${f.cultivo}","${f.hectareas}","${f.ubicacion}"\n`;
+      csv += `"${f.nombre}","${f.cultivo}","${f.superficie}","${f.ubicacion?.direccion || 'Sin ubicación'}"\n`;
     });
 
     csv += '\nVISITAS\n';
-    csv += 'Cliente ID,Finca ID,Fecha,Estado,Nota\n';
+    csv += 'Cliente ID,Finca ID,Fecha,Estado,Notas\n';
     visitas.forEach(v => {
-      csv += `"${v.clienteId}","${v.fincaId}","${v.fecha}","${v.estado}","${v.nota}"\n`;
+      csv += `"${v.clienteId}","${v.fincaId}","${v.fecha}","${v.estado}","${v.notas || ''}"\n`;
     });
 
     const element = document.createElement('a');
@@ -103,8 +99,6 @@ export function InformesPage() {
         </button>
       </div>
 
-      <SyncStatus syncing={syncing} error={error} lastSync={null} />
-
       {error && <div className="error-box">{error}</div>}
 
       {/* Tarjetas de Estadísticas */}
@@ -113,8 +107,8 @@ export function InformesPage() {
           <h3>👥 Clientes Totales</h3>
           <div className="stat-value">{stats.totalClientes}</div>
           <div className="stat-detail">
-            <span>Productores: {stats.clientesPorRol.productores}</span>
-            <span>Técnicos: {stats.clientesPorRol.tecnicos}</span>
+            <span>Total: {stats.clientesPorRol.total}</span>
+            <span>Activos: {stats.clientesPorRol.activos}</span>
           </div>
         </div>
 
@@ -158,7 +152,7 @@ export function InformesPage() {
               const count = fincas.filter(f => f.cultivo === cultivo).length;
               const hectareas = fincas
                 .filter(f => f.cultivo === cultivo)
-                .reduce((sum, f) => sum + (f.hectareas || 0), 0);
+                .reduce((sum, f) => sum + (f.superficie || 0), 0);
               return (
                 <div key={idx} className="cultivo-item">
                   <div>
@@ -250,7 +244,7 @@ export function InformesPage() {
                   <th>Finca</th>
                   <th>Fecha</th>
                   <th>Estado</th>
-                  <th>Nota</th>
+                  <th>Notas</th>
                 </tr>
               </thead>
               <tbody>
@@ -264,7 +258,7 @@ export function InformesPage() {
                         {visita.estado}
                       </span>
                     </td>
-                    <td>{visita.nota}</td>
+                    <td>{visita.notas || '-'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -290,7 +284,7 @@ export function InformesPage() {
                     {visita.estado}
                   </span>
                 </div>
-                <p className="activity-note">📍 {visita.nota}</p>
+                <p className="activity-note">📍 {visita.notas || 'Sin notas'}</p>
               </div>
             ))}
           </div>

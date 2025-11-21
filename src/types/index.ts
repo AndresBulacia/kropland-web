@@ -244,6 +244,7 @@ export interface FiltrosVisita {
   fechaHasta?: string;
   tecnico?: string;
   cliente?: string;
+  fincaId?: string;
 }
 
 export interface EstadisticasDashboard {

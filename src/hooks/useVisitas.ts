@@ -111,7 +111,7 @@ export const useVisitas = () => {
       // Por cliente
       if (filtros.cliente && v.clienteId !== filtros.cliente) return false;
       // Por finca
-      if (filtros.finca && v.fincaId !== filtros.fincaId) return false;
+      if (filtros.fincaId && v.fincaId !== filtros.fincaId) return false;
       // Por técnico
       if (filtros.tecnico && v.tecnicoId !== filtros.tecnico) return false;
       // Por estado

@@ -65,7 +65,7 @@ export const VisitasPage: React.FC = () => {
     if (filtros.busqueda) {
       const termino = filtros.busqueda.toLowerCase();
       resultado = resultado.filter(v =>
-        v.notas.toLowerCase().includes(termino)
+        v.notas?.toLowerCase().includes(termino)
       );
     }
 

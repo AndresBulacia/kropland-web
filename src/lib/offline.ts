@@ -34,7 +34,6 @@ export const subscribeToOfflineState = (callback: (state: OfflineState) => void)
   // Llamar inmediatamente con el estado actual
   callback(offlineState);
   
-
   return () => {
     const index = listeners.indexOf(callback);
     if (index > -1) {
@@ -89,8 +88,8 @@ export const syncData = async () => {
   updateOfflineState({ isSyncing: true, syncError: null });
 
   try {
-    
     await initDB();
+    
     // Reproducir la cola local primero para no pisar cambios pendientes
     const syncQueue = await getSyncQueue();
     if (syncQueue.length > 0) {
@@ -198,4 +197,52 @@ export const registerServiceWorker = async () => {
   if (!('serviceWorker' in navigator)) {
     console.log('⚠️ Service Workers no soportados');
     return;
-  }};
+  }
+
+  try {
+    // Esperar a que la página esté completamente cargada
+    if (document.readyState !== 'complete') {
+      await new Promise(resolve => window.addEventListener('load', resolve));
+    }
+
+    const registration = await navigator.serviceWorker.register('/service-worker.js', {
+      scope: '/',
+    });
+
+    console.log('✅ Service Worker registrado:', registration.scope);
+
+    // Escuchar actualizaciones del Service Worker
+    registration.addEventListener('updatefound', () => {
+      const newWorker = registration.installing;
+      
+      if (newWorker) {
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            console.log('🔄 Nueva versión disponible');
+            // Aquí podrías mostrar una notificación al usuario
+            // por ejemplo: mostrar un toast "Nueva versión disponible, recarga la página"
+          }
+        });
+      }
+    });
+
+    // Forzar actualización del SW cuando se carga la página
+    if (registration.waiting) {
+      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    }
+
+    // Recargar la página cuando el nuevo service worker tome control
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        console.log('🔄 Service Worker actualizado, recargando...');
+        window.location.reload();
+      }
+    });
+
+    return registration;
+  } catch (error) {
+    console.error('❌ Error registrando Service Worker:', error);
+  }
+};

@@ -5,7 +5,6 @@ import { es } from 'date-fns/locale';
 import { useVisitas } from '../hooks/useVisitas';
 import { useClientes } from '../hooks/useClientes';
 import { useFincas } from '../hooks/useFincas';
-import type { Visita } from '../types';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './CalendarioPage.css';
 
@@ -39,7 +38,7 @@ interface CalendarEvent {
 }
 
 export const CalendarioPage: React.FC = () => {
-  const { visitas, actualizarVisita } = useVisitas();
+  const { visitas } = useVisitas();
   const { clientes } = useClientes();
   const { fincas } = useFincas();
   
@@ -60,7 +59,7 @@ export const CalendarioPage: React.FC = () => {
       if (filtroTipo === 'actividades') return;
 
       const fecha = new Date(visita.fecha);
-      const [hora, minuto] = visita.horaInicio.split(':').map(Number);
+      const [hora, minuto] = (visita.horaInicio || '00:00').split(':').map(Number);
       const inicio = new Date(fecha);
       inicio.setHours(hora, minuto, 0);
 
@@ -102,7 +101,7 @@ export const CalendarioPage: React.FC = () => {
   const eventStyleGetter = (event: CalendarEvent) => {
     let backgroundColor = '#00A859';
     let borderColor = '#00A859';
-    let textColor = 'white';
+    const textColor = '#FFFFFF';
 
     if (event.resource?.estado === 'Pendiente') {
       backgroundColor = '#FFA726';

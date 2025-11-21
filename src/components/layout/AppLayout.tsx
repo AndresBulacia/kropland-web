@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import { MobileNav } from './Mobilenav';
+import { MobileNav } from './MobileNav';
 import './AppLayout.css';
 
 interface AppLayoutProps {

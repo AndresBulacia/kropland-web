@@ -7,7 +7,7 @@ import { Select } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
 import { FincaCard } from '../components/fincas/FincaCard';
 import { FincaForm } from '../components/fincas/FincaForm';
-import { Finca, TipoCultivo, TipoRiego } from '../types';
+import type { Finca, TipoCultivo, TipoRiego } from '../types';
 import './FincasPage.css';
 
 export const FincasPage: React.FC = () => {

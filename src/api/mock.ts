@@ -1,27 +1,238 @@
 import type { Cliente, Finca, Visita } from '../types';
 
-// Datos demo realistas
+// Datos demo realistas con tipos correctos
 const MOCK_DATA = {
   clientes: [
-    { id: '1', nombre: 'José Anastasi', email: 'jose@example.com', telefono: '123456789', rol: 'productor', createdAt: new Date().toISOString() },
-    { id: '2', nombre: 'María López', email: 'maria@example.com', telefono: '987654321', rol: 'productor', createdAt: new Date().toISOString() },
-    { id: '3', nombre: 'Carlos Ruiz', email: 'carlos@example.com', telefono: '555666777', rol: 'productor', createdAt: new Date().toISOString() },
-    { id: '4', nombre: 'Ana García', email: 'ana@example.com', telefono: '111222333', rol: 'productor', createdAt: new Date().toISOString() },
-    { id: '5', nombre: 'Juan Pérez', email: 'juan@example.com', telefono: '444555666', rol: 'productor', createdAt: new Date().toISOString() },
+    {
+      id: '1',
+      nombre: 'José',
+      apellidos: 'Anastasi',
+      dni: '12345678A',
+      telefono: '123456789',
+      email: 'jose@example.com',
+      poblacion: 'Buenos Aires',
+      provincia: 'Buenos Aires',
+      comunidadAutonoma: 'Buenos Aires',
+      codigoPostal: '1000',
+      direccion: 'Av. Corrientes 1234',
+      notas: 'Cliente prioritario',
+      fechaAlta: new Date().toISOString(),
+      activo: true,
+    },
+    {
+      id: '2',
+      nombre: 'María',
+      apellidos: 'López',
+      dni: '23456789B',
+      telefono: '987654321',
+      email: 'maria@example.com',
+      poblacion: 'Córdoba',
+      provincia: 'Córdoba',
+      comunidadAutonoma: 'Córdoba',
+      codigoPostal: '5000',
+      direccion: 'Av. San Martín 567',
+      fechaAlta: new Date().toISOString(),
+      activo: true,
+    },
+    {
+      id: '3',
+      nombre: 'Carlos',
+      apellidos: 'Ruiz',
+      dni: '34567890C',
+      telefono: '555666777',
+      email: 'carlos@example.com',
+      poblacion: 'Rosario',
+      provincia: 'Santa Fe',
+      comunidadAutonoma: 'Santa Fe',
+      codigoPostal: '2000',
+      direccion: 'Calle Sarmiento 890',
+      fechaAlta: new Date().toISOString(),
+      activo: true,
+    },
+    {
+      id: '4',
+      nombre: 'Ana',
+      apellidos: 'García',
+      dni: '45678901D',
+      telefono: '111222333',
+      email: 'ana@example.com',
+      poblacion: 'Mendoza',
+      provincia: 'Mendoza',
+      comunidadAutonoma: 'Mendoza',
+      codigoPostal: '5500',
+      direccion: 'Av. Las Heras 234',
+      fechaAlta: new Date().toISOString(),
+      activo: true,
+    },
+    {
+      id: '5',
+      nombre: 'Juan',
+      apellidos: 'Pérez',
+      dni: '56789012E',
+      telefono: '444555666',
+      email: 'juan@example.com',
+      poblacion: 'Posadas',
+      provincia: 'Misiones',
+      comunidadAutonoma: 'Misiones',
+      codigoPostal: '3300',
+      direccion: 'Ruta Nacional 12 Km 45',
+      fechaAlta: new Date().toISOString(),
+      activo: true,
+    },
   ] as Cliente[],
-  
+
   fincas: [
-    { id: '1', nombre: 'Finca El Paraíso', clienteId: '1', cultivo: 'Maíz', hectareas: 150, ubicacion: 'Buenos Aires', createdAt: new Date().toISOString() },
-    { id: '2', nombre: 'Finca Los Andes', clienteId: '2', cultivo: 'Soja', hectareas: 200, ubicacion: 'Córdoba', createdAt: new Date().toISOString() },
-    { id: '3', nombre: 'Finca Verde', clienteId: '3', cultivo: 'Trigo', hectareas: 100, ubicacion: 'Entre Ríos', createdAt: new Date().toISOString() },
-    { id: '4', nombre: 'Finca Esperanza', clienteId: '4', cultivo: 'Girasol', hectareas: 120, ubicacion: 'La Pampa', createdAt: new Date().toISOString() },
-    { id: '5', nombre: 'Finca Dorada', clienteId: '5', cultivo: 'Algodón', hectareas: 180, ubicacion: 'Misiones', createdAt: new Date().toISOString() },
+    {
+      id: '1',
+      clienteId: '1',
+      nombre: 'Finca El Paraíso',
+      cultivo: 'Olivo',
+      variedad: 'Arbequina',
+      superficie: 150,
+      volumenCaldoPorHa: 800,
+      añoPlantacion: 2015,
+      tipoRiego: 'Regadío',
+      ubicacion: {
+        direccion: 'Ruta 9 Km 123, Buenos Aires',
+        latitud: -34.6037,
+        longitud: -58.3816,
+      },
+      notas: 'Finca principal del cliente',
+      fechaCreacion: new Date().toISOString(),
+      activa: true,
+    },
+    {
+      id: '2',
+      clienteId: '2',
+      nombre: 'Finca Los Andes',
+      cultivo: 'Viña',
+      variedad: 'Malbec',
+      superficie: 200,
+      volumenCaldoPorHa: 600,
+      añoPlantacion: 2010,
+      tipoRiego: 'Regadío',
+      ubicacion: {
+        direccion: 'Valle de Uco, Mendoza',
+        latitud: -31.4201,
+        longitud: -64.1888,
+      },
+      fechaCreacion: new Date().toISOString(),
+      activa: true,
+    },
+    {
+      id: '3',
+      clienteId: '3',
+      nombre: 'Finca Verde',
+      cultivo: 'Almendro',
+      variedad: 'Marcona',
+      superficie: 100,
+      volumenCaldoPorHa: 700,
+      añoPlantacion: 2018,
+      tipoRiego: 'Secano',
+      ubicacion: {
+        direccion: 'Entre Ríos',
+        latitud: -31.7333,
+        longitud: -60.5297,
+      },
+      fechaCreacion: new Date().toISOString(),
+      activa: true,
+    },
+    {
+      id: '4',
+      clienteId: '4',
+      nombre: 'Finca Esperanza',
+      cultivo: 'Pistacho',
+      variedad: 'Kerman',
+      superficie: 120,
+      volumenCaldoPorHa: 750,
+      añoPlantacion: 2016,
+      tipoRiego: 'Regadío',
+      ubicacion: {
+        direccion: 'La Pampa',
+        latitud: -36.6167,
+        longitud: -64.2833,
+      },
+      fechaCreacion: new Date().toISOString(),
+      activa: true,
+    },
+    {
+      id: '5',
+      clienteId: '5',
+      nombre: 'Finca Dorada',
+      cultivo: 'Cítricos',
+      variedad: 'Naranja Valencia',
+      superficie: 180,
+      volumenCaldoPorHa: 850,
+      añoPlantacion: 2012,
+      tipoRiego: 'Regadío',
+      ubicacion: {
+        direccion: 'Ruta 12, Misiones',
+        latitud: -27.3671,
+        longitud: -55.8969,
+      },
+      fechaCreacion: new Date().toISOString(),
+      activa: true,
+    },
   ] as Finca[],
-  
+
   visitas: [
-    { id: '1', clienteId: '1', fincaId: '1', fecha: new Date().toISOString(), estado: 'Realizada', nota: 'Revisar riego', tecnico: 'Admin', createdAt: new Date().toISOString() },
-    { id: '2', clienteId: '2', fincaId: '2', fecha: new Date(Date.now() + 86400000).toISOString(), estado: 'Confirmada', nota: 'Análisis de suelo', tecnico: 'Admin', createdAt: new Date().toISOString() },
-    { id: '3', clienteId: '3', fincaId: '3', fecha: new Date(Date.now() - 86400000).toISOString(), estado: 'Realizada', nota: 'Control de plagas', tecnico: 'Admin', createdAt: new Date().toISOString() },
+    {
+      id: '1',
+      clienteId: '1',
+      fincaId: '1',
+      tecnicoId: 'admin-1',
+      fecha: new Date().toISOString(),
+      estado: 'Realizada',
+      notas: 'Revisar sistema de riego - todo funcionando correctamente',
+      horaInicio: '09:00',
+      horaFin: '11:30',
+      duracionEstimada: 150,
+      ubicacionGPS: {
+        latitud: -34.6037,
+        longitud: -58.3816,
+      },
+      clima: {
+        temperatura: 22,
+        humedad: 65,
+        viento: 'Moderado del este',
+      },
+      fechaCreacion: new Date().toISOString(),
+    },
+    {
+      id: '2',
+      clienteId: '2',
+      fincaId: '2',
+      tecnicoId: 'admin-1',
+      fecha: new Date(Date.now() + 86400000).toISOString(),
+      estado: 'Confirmada',
+      notas: 'Análisis de suelo programado - traer kit de muestras',
+      horaInicio: '10:00',
+      duracionEstimada: 120,
+      fechaCreacion: new Date().toISOString(),
+    },
+    {
+      id: '3',
+      clienteId: '3',
+      fincaId: '3',
+      tecnicoId: 'admin-1',
+      fecha: new Date(Date.now() - 86400000).toISOString(),
+      estado: 'Realizada',
+      notas: 'Control de plagas - se detectó presencia leve de mosca del olivo',
+      horaInicio: '08:30',
+      horaFin: '10:00',
+      duracionEstimada: 90,
+      tareasPendientes: [
+        {
+          id: '1',
+          descripcion: 'Aplicar tratamiento preventivo',
+          tipo: 'Pulverización',
+          costo: 5500,
+          fechaLimite: new Date(Date.now() + 7 * 86400000).toISOString(),
+          completada: false,
+        },
+      ],
+      fechaCreacion: new Date().toISOString(),
+    },
   ] as Visita[],
 };
 
@@ -30,7 +241,7 @@ const NETWORK_DELAY = 300; // ms
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Simular errores ocasionales
+// Simular errores ocasionales (5% de probabilidad)
 const maybeError = () => {
   if (Math.random() > 0.95) {
     throw new Error('Simulated network error');
@@ -52,13 +263,13 @@ export const mockApi = {
     return MOCK_DATA.clientes.find(c => c.id === id) || null;
   },
 
-  createCliente: async (data: Omit<Cliente, 'id' | 'createdAt'>): Promise<Cliente> => {
+  createCliente: async (data: Omit<Cliente, 'id' | 'fechaAlta'>): Promise<Cliente> => {
     await delay(NETWORK_DELAY);
     maybeError();
     const newCliente: Cliente = {
       ...data,
       id: Math.random().toString(36).substr(2, 9),
-      createdAt: new Date().toISOString(),
+      fechaAlta: new Date().toISOString(),
     };
     MOCK_DATA.clientes.push(newCliente);
     console.log('✅ Cliente creado en servidor:', newCliente);
@@ -97,13 +308,13 @@ export const mockApi = {
     return MOCK_DATA.fincas.find(f => f.id === id) || null;
   },
 
-  createFinca: async (data: Omit<Finca, 'id' | 'createdAt'>): Promise<Finca> => {
+  createFinca: async (data: Omit<Finca, 'id' | 'fechaCreacion'>): Promise<Finca> => {
     await delay(NETWORK_DELAY);
     maybeError();
     const newFinca: Finca = {
       ...data,
       id: Math.random().toString(36).substr(2, 9),
-      createdAt: new Date().toISOString(),
+      fechaCreacion: new Date().toISOString(),
     };
     MOCK_DATA.fincas.push(newFinca);
     console.log('✅ Finca creada en servidor:', newFinca);
@@ -142,13 +353,13 @@ export const mockApi = {
     return MOCK_DATA.visitas.find(v => v.id === id) || null;
   },
 
-  createVisita: async (data: Omit<Visita, 'id' | 'createdAt'>): Promise<Visita> => {
+  createVisita: async (data: Omit<Visita, 'id' | 'fechaCreacion'>): Promise<Visita> => {
     await delay(NETWORK_DELAY);
     maybeError();
     const newVisita: Visita = {
       ...data,
       id: Math.random().toString(36).substr(2, 9),
-      createdAt: new Date().toISOString(),
+      fechaCreacion: new Date().toISOString(),
     };
     MOCK_DATA.visitas.push(newVisita);
     console.log('✅ Visita creada en servidor:', newVisita);

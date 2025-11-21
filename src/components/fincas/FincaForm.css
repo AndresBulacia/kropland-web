@@ -93,3 +93,39 @@
     width: 100%;
   }
 }
+
+/* Asegurar que el modal de fincas tenga scroll */
+.finca-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  min-height: 0;
+}
+
+.finca-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  margin-top: auto;
+  border-top: 1px solid var(--color-border);
+  position: sticky;
+  bottom: 0;
+  background: white;
+  z-index: 10;
+}
+
+@media (max-width: 640px) {
+  .finca-form__row {
+    grid-template-columns: 1fr;
+  }
+  
+  .finca-form__actions {
+    flex-direction: column-reverse;
+    padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom));
+  }
+  
+  .finca-form__actions button {
+    width: 100%;
+  }
+}

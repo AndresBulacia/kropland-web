@@ -1,96 +1,117 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEstadisticas } from '../hooks/useEstadisticas';
+import { useVisitas } from '../hooks/useVisitas';
+import { useClientes } from '../hooks/useClientes';
+import { useFincas } from '../hooks/useFincas';
+import { useAuth } from '../store/authStore';
 import { StatCard } from '../components/common/StatCard';
 import { SimpleChart, SimplePieChart } from '../components/common/SimpleChart';
 import { ActivityList } from '../components/common/ActivityList';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
+import type { Visita } from '../types';
 import './InicioPage.css';
 
 export const InicioPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { estadisticas, loading } = useEstadisticas();
-  const [userName] = useState('Usuario Admin'); // Después lo obtienes del contexto de auth
+  const { visitas } = useVisitas();
+  const { clientes } = useClientes();
+  const { fincas } = useFincas();
 
-  // Actividades recientes simuladas
-  const actividadesRecientes = [
-    {
-      id: '1',
-      type: 'visita' as const,
-      title: 'Visita programada',
-      description: 'Visita a la finca "El Olivar" de Juan García',
-      time: new Date(Date.now() - 1800000).toISOString(), // 30 min ago
-      user: 'Técnico Agrónomo'
-    },
-    {
-      id: '2',
-      type: 'actividad' as const,
-      title: 'Tratamiento aplicado',
-      description: 'Pulverización fitosanitaria en finca "Los Almendros"',
-      time: new Date(Date.now() - 7200000).toISOString(), // 2h ago
-      user: 'María López'
-    },
-    {
-      id: '3',
-      type: 'cliente' as const,
-      title: 'Nuevo cliente registrado',
-      description: 'Pedro Fernández - Córdoba',
-      time: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-      user: 'Sistema'
-    },
-    {
-      id: '4',
-      type: 'alerta' as const,
-      title: 'Alerta meteorológica',
-      description: 'Riesgo de heladas en zona de Ciudad Real',
-      time: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-      user: 'KropSens'
-    }
-  ];
+  // Obtener próximas visitas (pendientes y confirmadas, ordenadas por fecha)
+  const proximasVisitas = React.useMemo(() => {
+    return visitas
+      .filter(v => v.estado === 'Pendiente' || v.estado === 'Confirmada')
+      .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+      .slice(0, 5)
+      .map(visita => {
+        const cliente = clientes.find(c => c.id === visita.clienteId);
+        const finca = fincas.find(f => f.id === visita.fincaId);
+        const fechaVisita = new Date(visita.fecha);
+        const hoy = new Date();
+        const manana = new Date();
+        manana.setDate(hoy.getDate() + 1);
 
-  // Datos de actividades por tipo
+        let fechaTexto = '';
+        if (fechaVisita.toDateString() === hoy.toDateString()) {
+          fechaTexto = `Hoy${visita.horaInicio ? `, ${visita.horaInicio}` : ''}`;
+        } else if (fechaVisita.toDateString() === manana.toDateString()) {
+          fechaTexto = `Mañana${visita.horaInicio ? `, ${visita.horaInicio}` : ''}`;
+        } else {
+          fechaTexto = fechaVisita.toLocaleDateString('es-ES', { 
+            day: '2-digit', 
+            month: 'short' 
+          }) + (visita.horaInicio ? `, ${visita.horaInicio}` : '');
+        }
+
+        return {
+          id: visita.id,
+          cliente: cliente ? `${cliente.nombre} ${cliente.apellidos}` : 'Cliente desconocido',
+          finca: finca?.nombre || 'Finca desconocida',
+          fecha: fechaTexto,
+          estado: visita.estado as 'Confirmada' | 'Pendiente',
+        };
+      });
+  }, [visitas, clientes, fincas]);
+
+  // Generar actividades recientes desde visitas reales
+  const actividadesRecientes = React.useMemo(() => {
+    return visitas
+      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+      .slice(0, 5)
+      .map(visita => {
+        const cliente = clientes.find(c => c.id === visita.clienteId);
+        const finca = fincas.find(f => f.id === visita.fincaId);
+        
+        return {
+          id: visita.id,
+          type: 'visita' as const,
+          title: `Visita ${visita.estado.toLowerCase()}`,
+          description: `${finca?.nombre || 'Finca'} - ${cliente?.nombre || 'Cliente'} ${cliente?.apellidos || ''}`,
+          time: visita.fecha,
+          user: visita.tecnicoId || 'Sistema',
+        };
+      });
+  }, [visitas, clientes, fincas]);
+
+  // Distribución de cultivos desde datos reales
+  const cultivosDistribucion = React.useMemo(() => {
+    const cultivosCount = fincas.reduce((acc, finca) => {
+      const cultivo = finca.cultivo;
+      if (!acc[cultivo]) {
+        acc[cultivo] = { count: 0, superficie: 0 };
+      }
+      acc[cultivo].count++;
+      acc[cultivo].superficie += finca.superficie || 0;
+      return acc;
+    }, {} as Record<string, { count: number; superficie: number }>);
+
+    const colores = [
+      '#193C1E', '#00A859', '#8B5CF6', '#F59E0B', 
+      '#3B82F6', '#EF4444', '#10B981', '#F97316'
+    ];
+
+    return Object.entries(cultivosCount)
+      .map(([label, data], index) => ({
+        label,
+        value: data.superficie,
+        color: colores[index % colores.length],
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6);
+  }, [fincas]);
+
+  // Datos simulados para actividades por tipo (mejorar esto con datos reales después)
   const actividadesPorTipo = [
-    { label: 'Poda', value: 12, color: '#193C1E' },
-    { label: 'Riego', value: 25, color: '#3B82F6' },
-    { label: 'Tratamiento', value: 18, color: '#00A859' },
-    { label: 'Recolección', value: 8, color: '#F59E0B' },
-    { label: 'Análisis', value: 5, color: '#8B5CF6' }
+    { label: 'Visitas', value: visitas.length, color: '#193C1E' },
+    { label: 'Realizadas', value: visitas.filter(v => v.estado === 'Realizada').length, color: '#00A859' },
+    { label: 'Pendientes', value: visitas.filter(v => v.estado === 'Pendiente').length, color: '#F59E0B' },
+    { label: 'Confirmadas', value: visitas.filter(v => v.estado === 'Confirmada').length, color: '#3B82F6' },
   ];
-
-  // Datos de cultivos
-  const cultivosDistribucion = [
-    { label: 'Olivo', value: 45, color: '#193C1E' },
-    { label: 'Almendro', value: 25, color: '#00A859' },
-    { label: 'Viña', value: 20, color: '#8B5CF6' },
-    { label: 'Pistacho', value: 10, color: '#F59E0B' }
-  ];
-
-  // Próximas visitas simuladas
-  const [proximasVisitas] = useState([
-    {
-      id: '1',
-      cliente: 'Juan García',
-      finca: 'El Olivar',
-      fecha: 'Hoy, 16:00',
-      estado: 'Confirmada'
-    },
-    {
-      id: '2',
-      cliente: 'María López',
-      finca: 'Los Almendros',
-      fecha: 'Mañana, 10:00',
-      estado: 'Pendiente'
-    },
-    {
-      id: '3',
-      cliente: 'Pedro Fernández',
-      finca: 'La Viña Grande',
-      fecha: '08 Nov, 11:30',
-      estado: 'Confirmada'
-    }
-  ]);
 
   if (loading) {
     return (
@@ -109,7 +130,7 @@ export const InicioPage: React.FC = () => {
       <div className="inicio-page__welcome">
         <div>
           <h1 className="inicio-page__title">
-            ¡Bienvenido, {userName}! 👋
+            ¡Bienvenido, {user?.nombre || 'Usuario'}! 👋
           </h1>
           <p className="inicio-page__subtitle">
             Aquí tienes un resumen de tu actividad agrícola
@@ -154,11 +175,12 @@ export const InicioPage: React.FC = () => {
             </svg>
           }
           color="secondary"
+          onClick={() => navigate('/fincas')}
         />
 
         <StatCard
           title="Superficie Total"
-          value={`${estadisticas.superficieTotal} ha`}
+          value={`${Math.round(estadisticas.superficieTotal)} ha`}
           icon={
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -178,7 +200,7 @@ export const InicioPage: React.FC = () => {
           }
           color="warning"
           onClick={() => navigate('/visitas')}
-          trend={estadisticas.visitasPendientes > 0 ? { value: 12, isPositive: false } : undefined}
+          trend={estadisticas.visitasPendientes > 0 ? { value: estadisticas.visitasPendientes, isPositive: false } : undefined}
         />
       </div>
 
@@ -188,7 +210,7 @@ export const InicioPage: React.FC = () => {
         <div className="inicio-page__main">
           {/* Actividades por tipo */}
           <SimpleChart
-            title="Actividades Este Mes"
+            title="Estado de Visitas"
             data={actividadesPorTipo}
             height={280}
           />
@@ -196,45 +218,61 @@ export const InicioPage: React.FC = () => {
           {/* Próximas visitas */}
           <Card title="Próximas Visitas" padding="none">
             <div className="inicio-page__visitas">
-              {proximasVisitas.map((visita) => (
-                <div key={visita.id} className="visita-item">
-                  <div className="visita-item__info">
-                    <div className="visita-item__header">
-                      <h4>{visita.cliente}</h4>
-                      <Badge 
-                        variant={visita.estado === 'Confirmada' ? 'success' : 'warning'}
+              {proximasVisitas.length > 0 ? (
+                <>
+                  {proximasVisitas.map((visita) => (
+                    <div key={visita.id} className="visita-item">
+                      <div className="visita-item__info">
+                        <div className="visita-item__header">
+                          <h4>{visita.cliente}</h4>
+                          <Badge 
+                            variant={visita.estado === 'Confirmada' ? 'success' : 'warning'}
+                            size="sm"
+                          >
+                            {visita.estado}
+                          </Badge>
+                        </div>
+                        <p className="visita-item__finca">{visita.finca}</p>
+                        <span className="visita-item__fecha">
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {visita.fecha}
+                        </span>
+                      </div>
+                      <Button
                         size="sm"
+                        variant="ghost"
+                        onClick={() => navigate('/visitas')}
                       >
-                        {visita.estado}
-                      </Badge>
+                        Ver
+                      </Button>
                     </div>
-                    <p className="visita-item__finca">{visita.finca}</p>
-                    <span className="visita-item__fecha">
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {visita.fecha}
-                    </span>
+                  ))}
+                  
+                  <div className="inicio-page__visitas-footer">
+                    <Button
+                      variant="outline"
+                      fullWidth
+                      onClick={() => navigate('/visitas')}
+                    >
+                      Ver todas las visitas
+                    </Button>
                   </div>
+                </>
+              ) : (
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                  <p>No hay visitas programadas</p>
                   <Button
+                    variant="primary"
                     size="sm"
-                    variant="ghost"
                     onClick={() => navigate('/visitas')}
+                    style={{ marginTop: '1rem' }}
                   >
-                    Ver
+                    Programar visita
                   </Button>
                 </div>
-              ))}
-              
-              <div className="inicio-page__visitas-footer">
-                <Button
-                  variant="outline"
-                  fullWidth
-                  onClick={() => navigate('/visitas')}
-                >
-                  Ver todas las visitas
-                </Button>
-              </div>
+              )}
             </div>
           </Card>
         </div>
@@ -284,13 +322,17 @@ export const InicioPage: React.FC = () => {
           </Card>
 
           {/* Distribución de cultivos */}
-          <SimplePieChart
-            title="Distribución de Cultivos"
-            data={cultivosDistribucion}
-          />
+          {cultivosDistribucion.length > 0 && (
+            <SimplePieChart
+              title="Distribución de Cultivos"
+              data={cultivosDistribucion}
+            />
+          )}
 
           {/* Actividad reciente */}
-          <ActivityList activities={actividadesRecientes} />
+          {actividadesRecientes.length > 0 && (
+            <ActivityList activities={actividadesRecientes} />
+          )}
         </div>
       </div>
 
