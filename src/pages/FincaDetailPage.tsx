@@ -1,42 +1,23 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFincas } from '../hooks/useFincas';
 import { useClientes } from '../hooks/useClientes';
-import { useActividades } from '../hooks/useActividades';
+import { useVisitas } from '../hooks/useVisitas';
 import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
 import { Badge } from '../components/common/Badge';
-import { ActividadCard } from '../components/actividades/ActividadCard';
-import { Modal } from '../components/common/Modal';
-import { ActividadForm } from '../components/actividades/ActividadForm';
-import type { Actividad } from '../types';
 import './FincaDetailPage.css';
 
 export const FincaDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { obtenerFinca } = useFincas();
-  const { obtenerCliente } = useClientes();
-  const { obtenerActividadesPorFinca, eliminarActividad, calcularCostosTotales } = useActividades();
-  
-  const [modalActividadAbierto, setModalActividadAbierto] = useState(false);
-  const [actividadEditando, setActividadEditando] = useState<Actividad | undefined>();
+  const { fincas } = useFincas();
+  const { clientes } = useClientes();
+  const { visitas } = useVisitas();
 
-  const finca = id ? obtenerFinca(id) : undefined;
-  const cliente = finca ? obtenerCliente(finca.clienteId) : undefined;
-  const actividades = id ? obtenerActividadesPorFinca(id) : [];
-  const costos = id ? calcularCostosTotales(id) : { total: 0, porTipo: {} };
-
-  const actividadesPorMes = useMemo(() => {
-    const meses: Record<string, Actividad[]> = {};
-    actividades.forEach(act => {
-      const fecha = new Date(act.fecha);
-      const key = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
-      if (!meses[key]) meses[key] = [];
-      meses[key].push(act);
-    });
-    return meses;
-  }, [actividades]);
+  const finca = fincas.find(f => f.id === id);
+  const cliente = finca ? clientes.find(c => c.id === finca.clienteId) : undefined;
+  const visitasFinca = visitas.filter(v => v.fincaId === id);
 
   if (!finca) {
     return (
@@ -47,38 +28,19 @@ export const FincaDetailPage: React.FC = () => {
           </svg>
           <h2>Finca no encontrada</h2>
           <p>La finca que buscas no existe o ha sido eliminada</p>
-          <Button variant="primary" onClick={() => navigate('/fincas')}>
-            Volver a Fincas
+          <Button variant="primary" onClick={() => navigate(-1)}>
+            Volver
           </Button>
         </div>
       </div>
     );
   }
 
-  const handleNuevaActividad = () => {
-    setActividadEditando(undefined);
-    setModalActividadAbierto(true);
-  };
-
-  const handleEditarActividad = (actividad: Actividad) => {
-    setActividadEditando(actividad);
-    setModalActividadAbierto(true);
-  };
-
-  const handleEliminarActividad = (actividadId: string) => {
-    eliminarActividad(actividadId);
-  };
-
-  const handleSubmitActividad = () => {
-    setModalActividadAbierto(false);
-    setActividadEditando(undefined);
-  };
-
   return (
     <div className="finca-detail-page">
       {/* Breadcrumb */}
       <div className="finca-detail-page__breadcrumb">
-        <button onClick={() => navigate('/fincas')}>Fincas</button>
+        <button onClick={() => navigate('/clientes')}>Clientes</button>
         <span>/</span>
         {cliente && (
           <>
@@ -103,36 +65,55 @@ export const FincaDetailPage: React.FC = () => {
           <div className="finca-header__info">
             <div className="finca-header__title">
               <h1>{finca.nombre}</h1>
-              <Badge variant={finca.activa ? 'success' : 'neutral'}>
-                {finca.activa ? 'Activa' : 'Inactiva'}
-              </Badge>
+              <Badge variant="success">{finca.cultivo}</Badge>
+              {finca.variedad && (
+                <Badge variant="neutral">{finca.variedad}</Badge>
+              )}
+              {!finca.activa && (
+                <Badge variant="error">Inactiva</Badge>
+              )}
             </div>
             
             <div className="finca-header__details">
               <div className="finca-header__detail">
-                <span className="finca-header__detail-label">Cultivo:</span>
-                <span className="finca-header__detail-value">{finca.cultivo} - {finca.variedad}</span>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span>
+                  {cliente ? (cliente.apellidos ? `${cliente.nombre} ${cliente.apellidos}` : cliente.nombre) : 'Cliente desconocido'}
+                </span>
               </div>
               
-              {finca.portainjerto && (
+              {finca.tecnicoAsignado && (
                 <div className="finca-header__detail">
-                  <span className="finca-header__detail-label">Portainjerto:</span>
-                  <span className="finca-header__detail-value">{finca.portainjerto}</span>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span><strong>Técnico:</strong> {finca.tecnicoAsignado}</span>
                 </div>
               )}
               
               <div className="finca-header__detail">
-                <span className="finca-header__detail-label">Cliente:</span>
-                <span className="finca-header__detail-value">
-                  {cliente ? `${cliente.nombre} ${cliente.apellidos}` : 'Desconocido'}
-                </span>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+                <span>{finca.superficie.toFixed(2)} ha</span>
               </div>
+              
+              {finca.tipoRiego && (
+                <div className="finca-header__detail">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                  <span>{finca.tipoRiego}</span>
+                </div>
+              )}
             </div>
           </div>
 
           <div className="finca-header__actions">
-            <Button variant="outline" onClick={() => navigate(`/clientes/${finca.clienteId}`)}>
-              Editar Finca
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              Volver
             </Button>
           </div>
         </div>
@@ -144,12 +125,12 @@ export const FincaDetailPage: React.FC = () => {
           <div className="finca-stat">
             <div className="finca-stat__icon finca-stat__icon--primary">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
             <div className="finca-stat__info">
-              <div className="finca-stat__value">{finca.superficie} ha</div>
-              <div className="finca-stat__label">Superficie</div>
+              <div className="finca-stat__value">{visitasFinca.length}</div>
+              <div className="finca-stat__label">Visitas Registradas</div>
             </div>
           </div>
         </Card>
@@ -158,12 +139,14 @@ export const FincaDetailPage: React.FC = () => {
           <div className="finca-stat">
             <div className="finca-stat__icon finca-stat__icon--success">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div className="finca-stat__info">
-              <div className="finca-stat__value">{actividades.length}</div>
-              <div className="finca-stat__label">Actividades</div>
+              <div className="finca-stat__value">
+                {visitasFinca.filter(v => v.estado === 'Realizada').length}
+              </div>
+              <div className="finca-stat__label">Visitas Realizadas</div>
             </div>
           </div>
         </Card>
@@ -172,106 +155,146 @@ export const FincaDetailPage: React.FC = () => {
           <div className="finca-stat">
             <div className="finca-stat__icon finca-stat__icon--warning">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="finca-stat__info">
-              <div className="finca-stat__value">{costos.total.toFixed(0)} €</div>
-              <div className="finca-stat__label">Costos Totales</div>
-            </div>
-          </div>
-        </Card>
-
-        <Card padding="md">
-          <div className="finca-stat">
-            <div className="finca-stat__icon finca-stat__icon--info">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div className="finca-stat__info">
               <div className="finca-stat__value">
-                {finca.añoPlantacion || 'N/A'}
+                {visitasFinca.filter(v => v.estado === 'Pendiente' || v.estado === 'Confirmada').length}
               </div>
-              <div className="finca-stat__label">Año Plantación</div>
+              <div className="finca-stat__label">Visitas Pendientes</div>
             </div>
           </div>
         </Card>
-      </div>
 
-      {/* Información adicional */}
-      <div className="finca-detail-page__grid">
-        <Card title="Características">
-          <div className="finca-info">
-            <div className="finca-info__item">
-              <span className="finca-info__label">Tipo de riego:</span>
-              <span className="finca-info__value">{finca.tipoRiego}</span>
+        {finca.volumenCaldoPorHa && (
+          <Card padding="md">
+            <div className="finca-stat">
+              <div className="finca-stat__icon finca-stat__icon--info">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+              </div>
+              <div className="finca-stat__info">
+                <div className="finca-stat__value">{finca.volumenCaldoPorHa} L/ha</div>
+                <div className="finca-stat__label">Volumen de Caldo</div>
+              </div>
             </div>
-            
-            {finca.volumenCaldoPorHa && (
-              <div className="finca-info__item">
-                <span className="finca-info__label">Volumen de caldo:</span>
-                <span className="finca-info__value">{finca.volumenCaldoPorHa} L/ha</span>
-              </div>
-            )}
-            
-            {finca.ubicacion.direccion && (
-              <div className="finca-info__item">
-                <span className="finca-info__label">Ubicación:</span>
-                <span className="finca-info__value">{finca.ubicacion.direccion}</span>
-              </div>
-            )}
-            
-            {finca.ubicacion.latitud && finca.ubicacion.longitud && (
-              <div className="finca-info__item">
-                <span className="finca-info__label">GPS:</span>
-                <span className="finca-info__value">
-                  {finca.ubicacion.latitud.toFixed(4)}, {finca.ubicacion.longitud.toFixed(4)}
-                </span>
-              </div>
-            )}
-            
-            {finca.notas && (
-              <div className="finca-info__item">
-                <span className="finca-info__label">Notas:</span>
-                <span className="finca-info__value">{finca.notas}</span>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        <Card title="Resumen de Costos">
-          <div className="finca-costos">
-            {Object.entries(costos.porTipo).length > 0 ? (
-              <>
-                {Object.entries(costos.porTipo).map(([tipo, costo]) => (
-                  <div key={tipo} className="finca-costos__item">
-                    <span className="finca-costos__tipo">{tipo}</span>
-                    <span className="finca-costos__valor">{costo.toFixed(2)} €</span>
-                  </div>
-                ))}
-                <div className="finca-costos__total">
-                  <span>Total</span>
-                  <span>{costos.total.toFixed(2)} €</span>
-                </div>
-              </>
-            ) : (
-              <p className="finca-costos__empty">No hay actividades registradas</p>
-            )}
-          </div>
-        </Card>
+          </Card>
+        )}
       </div>
 
-      {/* Actividades */}
+      {/* Registro de Visitas */}
       <div className="finca-detail-page__section">
         <div className="finca-detail-page__section-header">
           <div>
-            <h2>Actividades</h2>
-            <p>Historial de actividades realizadas en la finca</p>
+            <h2>Registro de Visitas</h2>
+            <p>Historial de visitas técnicas realizadas a esta finca</p>
           </div>
           <Button
             variant="primary"
-            onClick={handleNuevaActividad}
+            onClick={() => navigate('/visitas')}
+            icon={
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            }
+          >
+            Nueva Visita
+          </Button>
+        </div>
+
+        {visitasFinca.length === 0 ? (
+          <Card>
+            <div className="finca-detail-page__empty">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <h3>No hay visitas registradas</h3>
+              <p>Comienza añadiendo la primera visita a esta finca</p>
+              <Button variant="primary" onClick={() => navigate('/visitas')}>
+                Programar visita
+              </Button>
+            </div>
+          </Card>
+        ) : (
+          <div className="finca-detail-page__visitas">
+            {visitasFinca
+              .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+              .map((visita) => (
+                <Card key={visita.id} hoverable>
+                  <div className="visita-item">
+                    <div className="visita-item__date">
+                      <div className="visita-item__date-day">
+                        {new Date(visita.fecha).getDate()}
+                      </div>
+                      <div className="visita-item__date-month">
+                        {new Date(visita.fecha).toLocaleDateString('es-ES', { month: 'short' })}
+                      </div>
+                      <div className="visita-item__date-year">
+                        {new Date(visita.fecha).getFullYear()}
+                      </div>
+                    </div>
+
+                    <div className="visita-item__content">
+                      <div className="visita-item__header">
+                        <h4>Visita Técnica</h4>
+                        <Badge
+                          variant={
+                            visita.estado === 'Realizada' ? 'success' :
+                            visita.estado === 'Confirmada' ? 'info' :
+                            visita.estado === 'Cancelada' ? 'error' :
+                            'warning'
+                          }
+                          size="sm"
+                        >
+                          {visita.estado}
+                        </Badge>
+                      </div>
+
+                      {visita.horaInicio && (
+                        <div className="visita-item__time">
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>{visita.horaInicio}</span>
+                          {visita.duracionEstimada && (
+                            <span className="visita-item__duration">
+                              ({visita.duracionEstimada} min)
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {visita.notas && (
+                        <p className="visita-item__notes">{visita.notas}</p>
+                      )}
+                    </div>
+
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => navigate('/visitas')}
+                    >
+                      Ver detalles
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+          </div>
+        )}
+      </div>
+
+      {/* Cronograma de Actividades (placeholder por ahora) */}
+      <div className="finca-detail-page__section">
+        <div className="finca-detail-page__section-header">
+          <div>
+            <h2>Cronograma de Actividades</h2>
+            <p>Línea temporal de actividades programadas y realizadas</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/visitas')}
             icon={
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -282,54 +305,16 @@ export const FincaDetailPage: React.FC = () => {
           </Button>
         </div>
 
-        {actividades.length === 0 ? (
-          <Card>
-            <div className="finca-detail-page__empty">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-              </svg>
-              <h3>No hay actividades registradas</h3>
-              <p>Comienza registrando la primera actividad de esta finca</p>
-              <Button variant="primary" onClick={handleNuevaActividad}>
-                Añadir primera actividad
-              </Button>
-            </div>
-          </Card>
-        ) : (
-          <div className="finca-detail-page__actividades">
-            {actividades.map((actividad) => (
-              <ActividadCard
-                key={actividad.id}
-                actividad={actividad}
-                onEdit={handleEditarActividad}
-                onDelete={handleEliminarActividad}
-              />
-            ))}
+        <Card>
+          <div className="finca-detail-page__cronograma-placeholder">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <h3>Cronograma tipo Gantt</h3>
+            <p>Visualización temporal de actividades próximamente</p>
           </div>
-        )}
+        </Card>
       </div>
-
-      {/* Modal de actividad */}
-      <Modal
-        isOpen={modalActividadAbierto}
-        onClose={() => {
-          setModalActividadAbierto(false);
-          setActividadEditando(undefined);
-        }}
-        title={actividadEditando ? 'Editar Actividad' : 'Nueva Actividad'}
-        size="lg"
-      >
-        <ActividadForm
-          actividad={actividadEditando}
-          fincaId={finca.id}
-          superficieFinca={finca.superficie}
-          onSubmit={handleSubmitActividad}
-          onCancel={() => {
-            setModalActividadAbierto(false);
-            setActividadEditando(undefined);
-          }}
-        />
-      </Modal>
     </div>
   );
 };

@@ -1,10 +1,7 @@
 .finca-detail-page {
   max-width: 1400px;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-  animation: fadeIn var(--transition-base);
+  padding: var(--spacing-lg);
 }
 
 /* Breadcrumb */
@@ -12,26 +9,27 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
 .finca-detail-page__breadcrumb button {
-  color: var(--color-secondary);
   background: none;
   border: none;
-  padding: 0;
+  color: var(--color-secondary);
   cursor: pointer;
+  padding: 0;
   font-size: var(--font-size-sm);
-  transition: color var(--transition-fast);
+  transition: opacity var(--transition-fast);
 }
 
 .finca-detail-page__breadcrumb button:hover {
-  color: var(--color-secondary-dark);
+  opacity: 0.7;
   text-decoration: underline;
 }
 
-/* Header */
+/* Header de la finca */
 .finca-header {
   display: flex;
   gap: var(--spacing-lg);
@@ -43,7 +41,7 @@
   height: 80px;
   background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
   color: var(--color-text-inverse);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -65,47 +63,52 @@
   align-items: center;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
 }
 
 .finca-header__title h1 {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-primary);
   margin: 0;
+  color: var(--color-text-primary);
 }
 
 .finca-header__details {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
 }
 
 .finca-header__detail {
   display: flex;
+  align-items: center;
   gap: var(--spacing-sm);
   font-size: var(--font-size-sm);
-}
-
-.finca-header__detail-label {
   color: var(--color-text-secondary);
-  font-weight: var(--font-weight-medium);
 }
 
-.finca-header__detail-value {
-  color: var(--color-text-primary);
+.finca-header__detail svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.finca-header__detail strong {
+  color: var(--color-secondary);
 }
 
 .finca-header__actions {
   display: flex;
   gap: var(--spacing-sm);
-  flex-shrink: 0;
 }
 
 /* Estadísticas */
 .finca-detail-page__stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-md);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-lg);
+  margin: var(--spacing-xl) 0;
 }
 
 .finca-stat {
@@ -127,143 +130,62 @@
 .finca-stat__icon svg {
   width: 24px;
   height: 24px;
-  color: var(--color-text-inverse);
 }
 
 .finca-stat__icon--primary {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  background: linear-gradient(135deg, rgba(25, 60, 30, 0.1) 0%, rgba(25, 60, 30, 0.2) 100%);
+  color: var(--color-primary);
 }
 
 .finca-stat__icon--success {
-  background: linear-gradient(135deg, #00A859 0%, #00c266 100%);
+  background: linear-gradient(135deg, rgba(0, 168, 89, 0.1) 0%, rgba(0, 168, 89, 0.2) 100%);
+  color: var(--color-success);
 }
 
 .finca-stat__icon--warning {
-  background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+  background: linear-gradient(135deg, rgba(245, 124, 0, 0.1) 0%, rgba(245, 124, 0, 0.2) 100%);
+  color: var(--color-warning);
 }
 
 .finca-stat__icon--info {
-  background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.2) 100%);
+  color: var(--color-info);
 }
 
 .finca-stat__info {
   flex: 1;
-  min-width: 0;
 }
 
 .finca-stat__value {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
-  line-height: 1.2;
+  margin-bottom: 4px;
 }
 
 .finca-stat__label {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  margin-top: 2px;
 }
 
-/* Grid de info */
-.finca-detail-page__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--spacing-lg);
-}
-
-.finca-info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-.finca-info__item {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--spacing-md);
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.finca-info__item:last-child {
-  border-bottom: none;
-}
-
-.finca-info__label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-medium);
-}
-
-.finca-info__value {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
-  text-align: right;
-}
-
-/* Costos */
-.finca-costos {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.finca-costos__item {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--spacing-sm);
-  background-color: var(--color-bg-secondary);
-  border-radius: var(--radius-sm);
-}
-
-.finca-costos__tipo {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-.finca-costos__valor {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-}
-
-.finca-costos__total {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--spacing-md);
-  margin-top: var(--spacing-sm);
-  background-color: var(--color-secondary);
-  color: var(--color-text-inverse);
-  border-radius: var(--radius-md);
-  font-weight: var(--font-weight-bold);
-}
-
-.finca-costos__empty {
-  text-align: center;
-  color: var(--color-text-secondary);
-  padding: var(--spacing-lg);
-  font-size: var(--font-size-sm);
-}
-
-/* Sección */
+/* Secciones */
 .finca-detail-page__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
 }
 
 .finca-detail-page__section-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
 .finca-detail-page__section-header h2 {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-primary);
-  margin: 0 0 var(--spacing-xs) 0;
+  color: var(--color-text-primary);
+  margin: 0 0 4px 0;
 }
 
 .finca-detail-page__section-header p {
@@ -272,44 +194,128 @@
   margin: 0;
 }
 
-/* Actividades */
-.finca-detail-page__actividades {
+/* Visitas */
+.finca-detail-page__visitas {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
 }
 
-/* Empty state */
-.finca-detail-page__empty {
+.visita-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md);
+}
+
+.visita-item__date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.visita-item__date-day {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+.visita-item__date-month {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.visita-item__date-year {
+  font-size: var(--font-size-xs);
+  opacity: 0.8;
+}
+
+.visita-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.visita-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.visita-item__header h4 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.visita-item__time {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.visita-item__time svg {
+  width: 14px;
+  height: 14px;
+}
+
+.visita-item__duration {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+.visita-item__notes {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: var(--spacing-xs) 0 0 0;
+  line-height: 1.5;
+}
+
+/* Cronograma placeholder */
+.finca-detail-page__cronograma-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: var(--spacing-2xl);
   text-align: center;
+  gap: var(--spacing-md);
 }
 
-.finca-detail-page__empty svg {
+.finca-detail-page__cronograma-placeholder svg {
   width: 64px;
   height: 64px;
   color: var(--color-text-tertiary);
-  margin-bottom: var(--spacing-lg);
 }
 
-.finca-detail-page__empty h3 {
+.finca-detail-page__cronograma-placeholder h3 {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-sm) 0;
+  margin: 0;
 }
 
-.finca-detail-page__empty p {
+.finca-detail-page__cronograma-placeholder p {
   font-size: var(--font-size-base);
   color: var(--color-text-secondary);
-  margin: 0 0 var(--spacing-lg) 0;
+  margin: 0;
 }
 
-/* Not found */
+/* Empty states */
+.finca-detail-page__empty,
 .finca-detail-page__not-found {
   display: flex;
   flex-direction: column;
@@ -317,29 +323,37 @@
   justify-content: center;
   padding: var(--spacing-2xl);
   text-align: center;
-  min-height: 60vh;
+  gap: var(--spacing-md);
 }
 
+.finca-detail-page__empty svg,
 .finca-detail-page__not-found svg {
-  width: 80px;
-  height: 80px;
-  color: var(--color-error);
-  margin-bottom: var(--spacing-lg);
+  width: 64px;
+  height: 64px;
+  color: var(--color-text-tertiary);
 }
 
+.finca-detail-page__empty h3,
 .finca-detail-page__not-found h2 {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-sm) 0;
+  margin: 0;
 }
 
+.finca-detail-page__empty p,
 .finca-detail-page__not-found p {
+  font-size: var(--font-size-base);
   color: var(--color-text-secondary);
-  margin: 0 0 var(--spacing-xl) 0;
+  margin: 0;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
+  .finca-detail-page {
+    padding: var(--spacing-md);
+  }
+  
   .finca-header {
     flex-direction: column;
   }
@@ -354,9 +368,12 @@
     height: 36px;
   }
   
-  .finca-header__title {
-    flex-direction: column;
-    align-items: flex-start;
+  .finca-header__title h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  .finca-header__details {
+    grid-template-columns: 1fr;
   }
   
   .finca-header__actions {
@@ -371,15 +388,16 @@
     grid-template-columns: 1fr;
   }
   
-  .finca-detail-page__grid {
-    grid-template-columns: 1fr;
-  }
-  
   .finca-detail-page__section-header {
     flex-direction: column;
+    align-items: stretch;
   }
   
   .finca-detail-page__section-header button {
     width: 100%;
+  }
+  
+  .visita-item {
+    flex-direction: column;
   }
 }

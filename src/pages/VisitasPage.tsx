@@ -2,448 +2,299 @@ import React, { useState, useMemo } from 'react';
 import { useVisitas } from '../hooks/useVisitas';
 import { useClientes } from '../hooks/useClientes';
 import { useFincas } from '../hooks/useFincas';
-import type { Visita } from '../types';
+import type { Visita, FiltrosVisita } from '../types';
+import { SearchBar } from '../components/common/SearchBar';
+import { Button } from '../components/common/Button';
+import { Modal } from '../components/common/Modal';
+import { Badge } from '../components/common/Badge';
+import { VisitaFormCompleto } from '../components/visitas/VisitaForm';
 import './VisitasPage.css';
 
-interface FiltrosUI {
-  cliente: string;
-  finca: string;
-  estado: string;
-  busqueda: string;
-  periodo: 'proximas' | 'todas' | 'realizadas';
-}
-
 export const VisitasPage: React.FC = () => {
-  const { visitas, crearVisita, actualizarVisita, eliminarVisita, cambiarEstado } = useVisitas();
+  const {
+    visitas,
+    loading,
+    crearVisita,
+    actualizarVisita,
+    eliminarVisita
+  } = useVisitas();
+  
   const { clientes } = useClientes();
   const { fincas } = useFincas();
 
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState<Visita['estado'] | 'todos'>('todos');
   const [modalAbierto, setModalAbierto] = useState(false);
-  const [visitaEditando, setVisitaEditando] = useState<Visita | null>(null);
-  const [filtros, setFiltros] = useState<FiltrosUI>({
-    cliente: '',
-    finca: '',
-    estado: '',
-    busqueda: '',
-    periodo: 'proximas'
-  });
+  const [visitaEditando, setVisitaEditando] = useState<Visita | undefined>();
 
-  // Filtrar visitas según criterios
-  const visitasFiltrando = useMemo(() => {
-    let resultado = visitas;
+  const visitasFiltradas = useMemo(() => {
+    return visitas.filter(visita => {
+      const cliente = clientes.find(c => c.id === visita.clienteId);
+      const finca = fincas.find(f => f.id === visita.fincaId);
+      
+      const cumpleBusqueda = !busqueda || 
+        cliente?.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+        cliente?.apellidos?.toLowerCase().includes(busqueda.toLowerCase()) ||
+        finca?.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+        visita.notas?.toLowerCase().includes(busqueda.toLowerCase()) ||
+        visita.observaciones?.toLowerCase().includes(busqueda.toLowerCase());
+      
+      const cumpleEstado = filtroEstado === 'todos' || visita.estado === filtroEstado;
+      
+      return cumpleBusqueda && cumpleEstado;
+    });
+  }, [visitas, clientes, fincas, busqueda, filtroEstado]);
 
-    // Filtro por período
-    if (filtros.periodo === 'proximas') {
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      const limite = new Date(hoy.getTime() + 30 * 24 * 60 * 60 * 1000);
-      resultado = resultado.filter(v => {
-        const fecha = new Date(v.fecha);
-        fecha.setHours(0, 0, 0, 0);
-        return fecha >= hoy && fecha <= limite;
-      });
-    } else if (filtros.periodo === 'realizadas') {
-      resultado = resultado.filter(v => v.estado === 'Realizada');
-    }
-
-    // Filtro por cliente
-    if (filtros.cliente) {
-      resultado = resultado.filter(v => v.clienteId === filtros.cliente);
-    }
-
-    // Filtro por finca
-    if (filtros.finca && filtros.cliente) {
-      resultado = resultado.filter(v => v.fincaId === filtros.finca);
-    }
-
-    // Filtro por estado
-    if (filtros.estado) {
-      resultado = resultado.filter(v => v.estado === filtros.estado);
-    }
-
-    // Búsqueda
-    if (filtros.busqueda) {
-      const termino = filtros.busqueda.toLowerCase();
-      resultado = resultado.filter(v =>
-        v.notas?.toLowerCase().includes(termino)
-      );
-    }
-
-    return resultado.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-  }, [visitas, filtros]);
-
-  // Fincas del cliente seleccionado
-  const fincasDelCliente = filtros.cliente
-    ? fincas.filter(f => f.clienteId === filtros.cliente)
-    : [];
-
-  const handleAbrirModalNueva = () => {
-    setVisitaEditando(null);
+  const handleNuevaVisita = () => {
+    setVisitaEditando(undefined);
     setModalAbierto(true);
   };
 
-  const handleAbrirModalEditar = (visita: Visita) => {
+  const handleEditarVisita = (visita: Visita) => {
     setVisitaEditando(visita);
     setModalAbierto(true);
   };
 
-  const handleGuardar = (datosFormulario: any) => {
+  const handleSubmitForm = (data: Omit<Visita, 'id' | 'fechaCreacion'>) => {
     if (visitaEditando) {
-      actualizarVisita(visitaEditando.id, datosFormulario);
+      actualizarVisita(visitaEditando.id, data);
     } else {
-      crearVisita(datosFormulario);
+      crearVisita(data);
     }
     setModalAbierto(false);
-    setVisitaEditando(null);
+    setVisitaEditando(undefined);
   };
 
-  const handleEliminar = (id: string) => {
-    if (confirm('¿Confirmar eliminación de la visita?')) {
+  const handleEliminarVisita = (id: string) => {
+    if (window.confirm('¿Estás seguro de eliminar esta visita?')) {
       eliminarVisita(id);
     }
   };
 
-  const handleCambiarEstado = (id: string, nuevoEstado: Visita['estado']) => {
-    cambiarEstado(id, nuevoEstado);
-  };
-
-  const estadosDisponibles: Visita['estado'][] = ['Pendiente', 'Confirmada', 'Realizada', 'Cancelada'];
+  if (loading) {
+    return (
+      <div className="visitas-page">
+        <div className="visitas-page__loading">
+          <div className="spinner spin"></div>
+          <p>Cargando visitas...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="visitas-page">
-      <div className="visitas-header">
-        <div>
-          <h1>📅 Visitas Técnicas</h1>
-          <p className="subtitle">Gestiona y planifica las visitas a las fincas</p>
+      {/* Header */}
+      <div className="visitas-page__header">
+        <div className="visitas-page__title-section">
+          <h1 className="visitas-page__title">Visitas Técnicas</h1>
+          <p className="visitas-page__subtitle">
+            Gestiona y registra las visitas a las fincas
+          </p>
         </div>
-        <button className="btn-nueva-visita" onClick={handleAbrirModalNueva}>
-          + Nueva Visita
-        </button>
+
+        <Button
+          variant="primary"
+          onClick={handleNuevaVisita}
+          icon={
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          }
+        >
+          Nueva Visita
+        </Button>
+      </div>
+
+      {/* Barra de búsqueda */}
+      <div className="visitas-page__toolbar">
+        <SearchBar
+          value={busqueda}
+          onChange={setBusqueda}
+          placeholder="Buscar por cliente, finca u observaciones..."
+          fullWidth
+        />
       </div>
 
       {/* Filtros */}
-      <div className="visitas-filtros">
-        <div className="filtro-grupo">
-          <label>Período</label>
-          <select
-            value={filtros.periodo}
-            onChange={(e) => setFiltros({ ...filtros, periodo: e.target.value as any })}
-            className="filtro-select"
-          >
-            <option value="proximas">Próximas (30 días)</option>
-            <option value="todas">Todas</option>
-            <option value="realizadas">Realizadas</option>
-          </select>
-        </div>
-
-        <div className="filtro-grupo">
-          <label>Cliente</label>
-          <select
-            value={filtros.cliente}
-            onChange={(e) => setFiltros({ ...filtros, cliente: e.target.value, finca: '' })}
-            className="filtro-select"
-          >
-            <option value="">Todos los clientes</option>
-            {clientes.map(c => (
-              <option key={c.id} value={c.id}>{c.nombre}</option>
-            ))}
-          </select>
-        </div>
-
-        {filtros.cliente && (
-          <div className="filtro-grupo">
-            <label>Finca</label>
-            <select
-              value={filtros.finca}
-              onChange={(e) => setFiltros({ ...filtros, finca: e.target.value })}
-              className="filtro-select"
-            >
-              <option value="">Todas las fincas</option>
-              {fincasDelCliente.map(f => (
-                <option key={f.id} value={f.id}>{f.nombre}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div className="filtro-grupo">
+      <div className="visitas-page__filters">
+        <div className="filter-group">
           <label>Estado</label>
-          <select
-            value={filtros.estado}
-            onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
-            className="filtro-select"
-          >
-            <option value="">Todos</option>
-            {estadosDisponibles.map(e => (
-              <option key={e} value={e}>{e}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filtro-grupo">
-          <label>Buscar en notas</label>
-          <input
-            type="text"
-            placeholder="Buscar..."
-            value={filtros.busqueda}
-            onChange={(e) => setFiltros({ ...filtros, busqueda: e.target.value })}
-            className="filtro-input"
-          />
+          <div className="filter-buttons">
+            <button
+              className={`filter-button ${filtroEstado === 'todos' ? 'active' : ''}`}
+              onClick={() => setFiltroEstado('todos')}
+            >
+              Todas ({visitas.length})
+            </button>
+            <button
+              className={`filter-button ${filtroEstado === 'Pendiente' ? 'active' : ''}`}
+              onClick={() => setFiltroEstado('Pendiente')}
+            >
+              Pendientes ({visitas.filter(v => v.estado === 'Pendiente').length})
+            </button>
+            <button
+              className={`filter-button ${filtroEstado === 'Confirmada' ? 'active' : ''}`}
+              onClick={() => setFiltroEstado('Confirmada')}
+            >
+              Confirmadas ({visitas.filter(v => v.estado === 'Confirmada').length})
+            </button>
+            <button
+              className={`filter-button ${filtroEstado === 'Realizada' ? 'active' : ''}`}
+              onClick={() => setFiltroEstado('Realizada')}
+            >
+              Realizadas ({visitas.filter(v => v.estado === 'Realizada').length})
+            </button>
+            <button
+              className={`filter-button ${filtroEstado === 'Cancelada' ? 'active' : ''}`}
+              onClick={() => setFiltroEstado('Cancelada')}
+            >
+              Canceladas ({visitas.filter(v => v.estado === 'Cancelada').length})
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Lista de visitas */}
-      <div className="visitas-lista">
-        {visitasFiltrando.length === 0 ? (
-          <div className="vacio">
-            <p>No hay visitas que mostrar</p>
-          </div>
-        ) : (
-          <div className="grid-visitas">
-            {visitasFiltrando.map(visita => {
+      {visitasFiltradas.length === 0 ? (
+        <div className="visitas-page__empty">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <h3>No hay visitas</h3>
+          <p>
+            {busqueda || filtroEstado !== 'todos'
+              ? 'No se encontraron visitas con esos criterios'
+              : 'Comienza programando tu primera visita'}
+          </p>
+          {!busqueda && filtroEstado === 'todos' && (
+            <Button variant="primary" onClick={handleNuevaVisita}>
+              Programar primera visita
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="visitas-page__grid">
+          {visitasFiltradas
+            .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+            .map((visita) => {
               const cliente = clientes.find(c => c.id === visita.clienteId);
               const finca = fincas.find(f => f.id === visita.fincaId);
-
+              
               return (
-                <div key={visita.id} className={`visita-card estado-${visita.estado.toLowerCase()}`}>
-                  <div className="visita-header">
-                    <div>
-                      <h3>{cliente?.nombre || 'Cliente desconocido'}</h3>
-                      <p className="finca-nombre">{finca?.nombre || 'Finca desconocida'}</p>
+                <div key={visita.id} className="visita-card">
+                  <div className="visita-card__header">
+                    <div className="visita-card__date">
+                      <div className="visita-card__date-day">
+                        {new Date(visita.fecha).getDate()}
+                      </div>
+                      <div className="visita-card__date-month">
+                        {new Date(visita.fecha).toLocaleDateString('es-ES', { month: 'short' })}
+                      </div>
                     </div>
-                    <span className={`estado-badge estado-${visita.estado.toLowerCase()}`}>
+                    
+                    <Badge
+                      variant={
+                        visita.estado === 'Realizada' ? 'success' :
+                        visita.estado === 'Confirmada' ? 'info' :
+                        visita.estado === 'Cancelada' ? 'error' :
+                        'warning'
+                      }
+                    >
                       {visita.estado}
-                    </span>
+                    </Badge>
                   </div>
 
-                  <div className="visita-detalles">
-                    <div className="detalle-item">
-                      <span className="label">📅 Fecha:</span>
-                      <span className="valor">{visita.fecha}</span>
-                    </div>
-                    <div className="detalle-item">
-                      <span className="label">🕐 Hora:</span>
-                      <span className="valor">{visita.horaInicio}</span>
-                    </div>
-                    {visita.duracionEstimada && (
-                      <div className="detalle-item">
-                        <span className="label">⏱️ Duración:</span>
-                        <span className="valor">{visita.duracionEstimada} min</span>
+                  <div className="visita-card__content">
+                    <h3 className="visita-card__title">
+                      {cliente ? (cliente.apellidos ? `${cliente.nombre} ${cliente.apellidos}` : cliente.nombre) : 'Cliente desconocido'}
+                    </h3>
+                    <p className="visita-card__subtitle">
+                      {finca?.nombre || 'Finca desconocida'}
+                    </p>
+                    
+                    {visita.duracionMinutos && (
+                      <div className="visita-card__info">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>{visita.duracionMinutos} minutos</span>
                       </div>
                     )}
-                  </div>
-
-                  <div className="visita-notas">
-                    <p>{visita.notas}</p>
-                  </div>
-
-                  <div className="visita-acciones">
-                    {visita.estado !== 'Realizada' && (
-                      <select
-                        value={visita.estado}
-                        onChange={(e) => handleCambiarEstado(visita.id, e.target.value as any)}
-                        className="select-estado"
-                      >
-                        {estadosDisponibles.map(e => (
-                          <option key={e} value={e}>{e}</option>
+                    
+                    {visita.actividadesRealizadas && visita.actividadesRealizadas.length > 0 && (
+                      <div className="visita-card__actividades">
+                        {visita.actividadesRealizadas.map((act, i) => (
+                          <Badge key={i} variant="neutral" size="sm">
+                            {act}
+                          </Badge>
                         ))}
-                      </select>
+                      </div>
                     )}
+                    
+                    {visita.observaciones && (
+                      <p className="visita-card__observaciones">
+                        {visita.observaciones.length > 100
+                          ? `${visita.observaciones.substring(0, 100)}...`
+                          : visita.observaciones}
+                      </p>
+                    )}
+                  </div>
 
-                    <button
-                      className="btn-editar"
-                      onClick={() => handleAbrirModalEditar(visita)}
+                  <div className="visita-card__actions">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditarVisita(visita)}
+                      icon={
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      }
                     >
                       Editar
-                    </button>
-
-                    <button
-                      className="btn-eliminar"
-                      onClick={() => handleEliminar(visita.id)}
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEliminarVisita(visita.id)}
+                      icon={
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      }
                     >
                       Eliminar
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );
             })}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Modal */}
-      {modalAbierto && (
-        <VisitaModal
+      {/* Modal de formulario */}
+      <Modal
+        isOpen={modalAbierto}
+        onClose={() => {
+          setModalAbierto(false);
+          setVisitaEditando(undefined);
+        }}
+        title={visitaEditando ? 'Editar Visita' : 'Nueva Visita'}
+        size="xl"
+      >
+        <VisitaFormCompleto
           visita={visitaEditando}
           clientes={clientes}
           fincas={fincas}
-          onGuardar={handleGuardar}
-          onCerrar={() => {
+          onSubmit={handleSubmitForm}
+          onCancel={() => {
             setModalAbierto(false);
-            setVisitaEditando(null);
+            setVisitaEditando(undefined);
           }}
         />
-      )}
-    </div>
-  );
-};
-
-// Componente Modal
-interface VisitaModalProps {
-  visita: Visita | null;
-  clientes: any[];
-  fincas: any[];
-  onGuardar: (datos: any) => void;
-  onCerrar: () => void;
-}
-
-const VisitaModal: React.FC<VisitaModalProps> = ({ visita, clientes, fincas, onGuardar, onCerrar }) => {
-  const [clienteSeleccionado, setClienteSeleccionado] = useState(visita?.clienteId || '');
-  const [form, setForm] = useState({
-    fincaId: visita?.fincaId || '',
-    fecha: visita?.fecha || '',
-    horaInicio: visita?.horaInicio || '',
-    horaFin: visita?.horaFin || '',
-    duracionEstimada: visita?.duracionEstimada || 60,
-    notas: visita?.notas || '',
-    tecnicoId: visita?.tecnicoId || 'tecnico1',
-    estado: visita?.estado || 'Pendiente'
-  });
-
-  const fincasDelCliente = fincas.filter(f => f.clienteId === clienteSeleccionado);
-
-  const handleChange = (field: string, value: any) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!clienteSeleccionado || !form.fincaId || !form.fecha || !form.horaInicio) {
-      alert('Por favor completa todos los campos obligatorios');
-      return;
-    }
-    onGuardar({
-      clienteId: clienteSeleccionado,
-      ...form
-    });
-  };
-
-  return (
-    <div className="modal-overlay" onClick={onCerrar}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{visita ? 'Editar Visita' : 'Nueva Visita'}</h2>
-          <button className="btn-cerrar" onClick={onCerrar}>✕</button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="visita-form">
-          <div className="form-grupo">
-            <label>Cliente *</label>
-            <select
-              value={clienteSeleccionado}
-              onChange={(e) => {
-                setClienteSeleccionado(e.target.value);
-                setForm(prev => ({ ...prev, fincaId: '' }));
-              }}
-              required
-            >
-              <option value="">Selecciona un cliente</option>
-              {clientes.map(c => (
-                <option key={c.id} value={c.id}>{c.nombre}</option>
-              ))}
-            </select>
-          </div>
-
-          {clienteSeleccionado && (
-            <div className="form-grupo">
-              <label>Finca *</label>
-              <select
-                value={form.fincaId}
-                onChange={(e) => handleChange('fincaId', e.target.value)}
-                required
-              >
-                <option value="">Selecciona una finca</option>
-                {fincasDelCliente.map(f => (
-                  <option key={f.id} value={f.id}>{f.nombre}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div className="form-grupo">
-            <label>Fecha *</label>
-            <input
-              type="date"
-              value={form.fecha}
-              onChange={(e) => handleChange('fecha', e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-fila">
-            <div className="form-grupo">
-              <label>Hora inicio *</label>
-              <input
-                type="time"
-                value={form.horaInicio}
-                onChange={(e) => handleChange('horaInicio', e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-grupo">
-              <label>Hora fin</label>
-              <input
-                type="time"
-                value={form.horaFin}
-                onChange={(e) => handleChange('horaFin', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="form-grupo">
-            <label>Duración estimada (minutos)</label>
-            <input
-              type="number"
-              value={form.duracionEstimada}
-              onChange={(e) => handleChange('duracionEstimada', parseInt(e.target.value))}
-              min="15"
-              step="15"
-            />
-          </div>
-
-          <div className="form-grupo">
-            <label>Notas</label>
-            <textarea
-              value={form.notas}
-              onChange={(e) => handleChange('notas', e.target.value)}
-              placeholder="Observaciones, puntos a revisar, etc..."
-              rows={4}
-            />
-          </div>
-
-          <div className="form-grupo">
-            <label>Estado</label>
-            <select
-              value={form.estado}
-              onChange={(e) => handleChange('estado', e.target.value)}
-            >
-              <option value="Pendiente">Pendiente</option>
-              <option value="Confirmada">Confirmada</option>
-              <option value="Realizada">Realizada</option>
-              <option value="Cancelada">Cancelada</option>
-            </select>
-          </div>
-
-          <div className="form-acciones">
-            <button type="button" className="btn-cancelar" onClick={onCerrar}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn-guardar">
-              {visita ? 'Actualizar' : 'Crear'} Visita
-            </button>
-          </div>
-        </form>
-      </div>
+      </Modal>
     </div>
   );
 };

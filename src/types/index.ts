@@ -105,25 +105,22 @@ export interface Visita {
   id: string;
   clienteId: string;
   fincaId: string;
-  tecnicoId: string;
   fecha: string;
-  estado: 'Pendiente' | 'Confirmada' | 'Realizada' | 'Cancelada';
-  notas?: string;
-  imagenes?: string[];
-  videos?: string[];
-  tareasPendientes?: Tarea[];
-  duracionEstimada?: number;
   horaInicio?: string;
   horaFin?: string;
-  ubicacionGPS?: {
-    latitud: number;
-    longitud: number;
-  };
-  clima?: {
-    temperatura?: number;
-    humedad?: number;
-    viento?: string;
-  };
+  duracionMinutos?: number;
+  tecnicoId: string;
+  estado: 'Pendiente' | 'Confirmada' | 'Realizada' | 'Cancelada';
+  observaciones?: string;
+  actividadesRealizadas?: string[];
+  climaObservado?: string;
+  estadoCultivo?: string;
+  plagasDetectadas?: string;
+  recomendaciones?: string;
+  proximaVisita?: string;
+  productosAplicados?: ProductoAplicado[];
+  notas?: string;
+  duracionEstimada?: number;
   fechaCreacion: string;
 }
 
