@@ -10,17 +10,23 @@ interface ClienteCardProps {
   cliente: Cliente;
   onEdit: (cliente: Cliente) => void;
   onDelete: (id: string) => void;
+  onView?: (cliente: Cliente) => void; // Opcional
 }
 
 export const ClienteCard: React.FC<ClienteCardProps> = ({
   cliente,
   onEdit,
-  onDelete
+  onDelete,
+  onView
 }) => {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
-    navigate(`/clientes/${cliente.id}`);
+    if (onView) {
+      onView(cliente);
+    } else {
+      navigate(`/clientes/${cliente.id}`);
+    }
   };
 
   const handleEdit = (e: React.MouseEvent) => {
@@ -33,6 +39,11 @@ export const ClienteCard: React.FC<ClienteCardProps> = ({
     if (window.confirm(`¿Estás seguro de eliminar a ${cliente.nombre} ${cliente.apellidos}?`)) {
       onDelete(cliente.id);
     }
+  };
+
+  const handleVerDetalles = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/clientes/${cliente.id}`);
   };
 
   return (
@@ -51,11 +62,23 @@ export const ClienteCard: React.FC<ClienteCardProps> = ({
               {cliente.nombre} {cliente.apellidos}
             </h3>
             <p className="cliente-card__dni">{cliente.dni}</p>
+            
+            {/* NUEVO - Badges de tipo y estado */}
+            <div className="cliente-card__badges">
+              <Badge 
+                variant={cliente.tipo === 'Activo' ? 'success' : 'warning'}
+                size="sm"
+              >
+                {cliente.tipo === 'Activo' ? 'Activo' : 'Potencial'}
+              </Badge>
+              
+              {!cliente.activo && (
+                <Badge variant="error" size="sm">
+                  Inactivo
+                </Badge>
+              )}
+            </div>
           </div>
-          
-          <Badge variant={cliente.activo ? 'success' : 'neutral'}>
-            {cliente.activo ? 'Activo' : 'Inactivo'}
-          </Badge>
         </div>
 
         {/* Información de contacto */}
@@ -114,10 +137,7 @@ export const ClienteCard: React.FC<ClienteCardProps> = ({
           <Button
             variant="primary"
             size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/clientes/${cliente.id}`);
-            }}
+            onClick={handleVerDetalles}
           >
             Ver detalles
           </Button>

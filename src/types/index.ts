@@ -16,7 +16,8 @@ export interface Usuario {
 export interface Cliente {
   id: string;
   nombre: string;
-  apellidos: string;
+  apellidos?: string;
+  tipoCliente?: 'Particular' | 'Empresa';
   dni: string;
   telefono: string;
   email: string;
@@ -26,9 +27,10 @@ export interface Cliente {
   codigoPostal?: string;
   direccion?: string;
   notas?: string;
-  fechaAlta: string;
   tecnicoAsignado?: string;
+  fechaAlta: string;
   activo: boolean;
+  tipo: 'Activo' | 'Potencial';
 }
 
 export type TipoCultivo = 

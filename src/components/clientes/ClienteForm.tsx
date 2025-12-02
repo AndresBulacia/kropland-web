@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { type Cliente } from '../../types';
+import type { Cliente } from '../../types';
 import { Input, Select, Textarea } from '../common/Input';
 import { Button } from '../common/Button';
 import './ClienteForm.css';
@@ -10,14 +10,39 @@ interface ClienteFormProps {
   onCancel: () => void;
 }
 
-const provinciasEspana = [
-  'Álava', 'Albacete', 'Alicante', 'Almería', 'Asturias', 'Ávila', 'Badajoz', 
-  'Barcelona', 'Burgos', 'Cáceres', 'Cádiz', 'Cantabria', 'Castellón', 'Ciudad Real',
-  'Córdoba', 'Cuenca', 'Girona', 'Granada', 'Guadalajara', 'Guipúzcoa', 'Huelva',
-  'Huesca', 'Islas Baleares', 'Jaén', 'La Coruña', 'La Rioja', 'Las Palmas', 'León',
-  'Lérida', 'Lugo', 'Madrid', 'Málaga', 'Murcia', 'Navarra', 'Ourense', 'Palencia',
-  'Pontevedra', 'Salamanca', 'Segovia', 'Sevilla', 'Soria', 'Tarragona', 'Santa Cruz de Tenerife',
-  'Teruel', 'Toledo', 'Valencia', 'Valladolid', 'Vizcaya', 'Zamora', 'Zaragoza'
+// Lista de comunidades autónomas de España
+const COMUNIDADES_AUTONOMAS = [
+  'Andalucía',
+  'Aragón',
+  'Asturias',
+  'Baleares',
+  'Canarias',
+  'Cantabria',
+  'Castilla-La Mancha',
+  'Castilla y León',
+  'Cataluña',
+  'Ceuta',
+  'Comunidad de Madrid',
+  'Comunidad Foral de Navarra',
+  'Comunidad Valenciana',
+  'Extremadura',
+  'Galicia',
+  'La Rioja',
+  'Melilla',
+  'País Vasco',
+  'Región de Murcia'
+];
+
+// Lista de provincias españolas
+const PROVINCIAS = [
+  'A Coruña', 'Álava', 'Albacete', 'Alicante', 'Almería', 'Asturias', 'Ávila',
+  'Badajoz', 'Baleares', 'Barcelona', 'Burgos', 'Cáceres', 'Cádiz', 'Cantabria',
+  'Castellón', 'Ceuta', 'Ciudad Real', 'Córdoba', 'Cuenca', 'Girona', 'Granada',
+  'Guadalajara', 'Guipúzcoa', 'Huelva', 'Huesca', 'Jaén', 'La Rioja', 'Las Palmas',
+  'León', 'Lleida', 'Lugo', 'Madrid', 'Málaga', 'Melilla', 'Murcia', 'Navarra',
+  'Ourense', 'Palencia', 'Pontevedra', 'Salamanca', 'Santa Cruz de Tenerife',
+  'Segovia', 'Sevilla', 'Soria', 'Tarragona', 'Teruel', 'Toledo', 'Valencia',
+  'Valladolid', 'Vizcaya', 'Zamora', 'Zaragoza'
 ];
 
 export const ClienteForm: React.FC<ClienteFormProps> = ({
@@ -26,6 +51,7 @@ export const ClienteForm: React.FC<ClienteFormProps> = ({
   onCancel
 }) => {
   const [formData, setFormData] = useState({
+    tipoCliente: cliente?.tipoCliente || 'Particular' as 'Particular' | 'Empresa',
     nombre: cliente?.nombre || '',
     apellidos: cliente?.apellidos || '',
     dni: cliente?.dni || '',
@@ -37,8 +63,9 @@ export const ClienteForm: React.FC<ClienteFormProps> = ({
     codigoPostal: cliente?.codigoPostal || '',
     direccion: cliente?.direccion || '',
     notas: cliente?.notas || '',
-    tecnicoAsignado: cliente?.tecnicoAsignado,
-    activo: cliente?.activo ?? true
+    tecnicoAsignado: cliente?.tecnicoAsignado || '',
+    activo: cliente?.activo ?? true,
+    tipo: cliente?.tipo || 'Activo' as 'Activo' | 'Potencial',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,7 +73,6 @@ export const ClienteForm: React.FC<ClienteFormProps> = ({
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Limpiar error del campo cuando se modifica
     if (errors[field]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -59,28 +85,42 @@ export const ClienteForm: React.FC<ClienteFormProps> = ({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
+    // Nombre siempre obligatorio (sea empresa o particular)
     if (!formData.nombre.trim()) {
-      newErrors.nombre = 'El nombre es obligatorio';
+      newErrors.nombre = formData.tipoCliente === 'Empresa' 
+        ? 'La razón social es obligatoria'
+        : 'El nombre es obligatorio';
     }
-    if (!formData.apellidos.trim()) {
-      newErrors.apellidos = 'Los apellidos son obligatorios';
+    
+    // Apellidos solo obligatorio para particulares
+    if (formData.tipoCliente === 'Particular' && !formData.apellidos.trim()) {
+      newErrors.apellidos = 'Los apellidos son obligatorios para particulares';
     }
+    
     if (!formData.dni.trim()) {
-      newErrors.dni = 'El DNI es obligatorio';
+      newErrors.dni = 'El DNI/CIF es obligatorio';
     }
+    
     if (!formData.telefono.trim()) {
       newErrors.telefono = 'El teléfono es obligatorio';
     }
+    
     if (!formData.email.trim()) {
       newErrors.email = 'El email es obligatorio';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'El email no es válido';
+      newErrors.email = 'Email inválido';
     }
+    
     if (!formData.poblacion.trim()) {
       newErrors.poblacion = 'La población es obligatoria';
     }
-    if (!formData.provincia) {
+    
+    if (!formData.provincia.trim()) {
       newErrors.provincia = 'La provincia es obligatoria';
+    }
+    
+    if (!formData.comunidadAutonoma.trim()) {
+      newErrors.comunidadAutonoma = 'La comunidad autónoma es obligatoria';
     }
 
     setErrors(newErrors);
@@ -95,10 +135,27 @@ export const ClienteForm: React.FC<ClienteFormProps> = ({
     }
 
     setLoading(true);
-    
-    // Simular delay de red
+
+    const clienteData = {
+      tipoCliente: formData.tipoCliente,
+      nombre: formData.nombre,
+      apellidos: formData.tipoCliente === 'Empresa' ? undefined : formData.apellidos,
+      dni: formData.dni,
+      telefono: formData.telefono,
+      email: formData.email,
+      poblacion: formData.poblacion,
+      provincia: formData.provincia,
+      comunidadAutonoma: formData.comunidadAutonoma,
+      codigoPostal: formData.codigoPostal || undefined,
+      direccion: formData.direccion || undefined,
+      notas: formData.notas || undefined,
+      tecnicoAsignado: formData.tecnicoAsignado || undefined,
+      activo: formData.activo,
+      tipo: formData.tipo,
+    };
+
     setTimeout(() => {
-      onSubmit(formData);
+      onSubmit(clienteData);
       setLoading(false);
     }, 500);
   };
@@ -106,18 +163,48 @@ export const ClienteForm: React.FC<ClienteFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="cliente-form">
       <div className="cliente-form__section">
-        <h3 className="cliente-form__section-title">Información Personal</h3>
+        <h3 className="cliente-form__section-title">Información Básica</h3>
         
         <div className="cliente-form__row">
-          <Input
-            label="Nombre *"
-            value={formData.nombre}
-            onChange={(e) => handleChange('nombre', e.target.value)}
-            error={errors.nombre}
+          <Select
+            label="Tipo de Cliente *"
+            value={formData.tipoCliente}
+            onChange={(e) => handleChange('tipoCliente', e.target.value)}
             fullWidth
-            placeholder="Ej: Juan"
+            options={[
+              { value: 'Particular', label: 'Particular' },
+              { value: 'Empresa', label: 'Empresa' }
+            ]}
           />
           
+          <Select
+            label="Estado *"
+            value={formData.tipo}
+            onChange={(e) => handleChange('tipo', e.target.value)}
+            fullWidth
+            options={[
+              { value: 'Activo', label: 'Cliente Activo' },
+              { value: 'Potencial', label: 'Cliente Potencial' }
+            ]}
+          />
+        </div>
+      </div>
+
+      <div className="cliente-form__section">
+        <h3 className="cliente-form__section-title">
+          {formData.tipoCliente === 'Empresa' ? 'Datos de la Empresa' : 'Información Personal'}
+        </h3>
+        
+        <Input
+          label={formData.tipoCliente === 'Empresa' ? 'Razón Social *' : 'Nombre *'}
+          value={formData.nombre}
+          onChange={(e) => handleChange('nombre', e.target.value)}
+          error={errors.nombre}
+          fullWidth
+          placeholder={formData.tipoCliente === 'Empresa' ? 'Ej: Agrícola Los Olivos S.L.' : 'Ej: Juan'}
+        />
+        
+        {formData.tipoCliente === 'Particular' && (
           <Input
             label="Apellidos *"
             value={formData.apellidos}
@@ -126,18 +213,16 @@ export const ClienteForm: React.FC<ClienteFormProps> = ({
             fullWidth
             placeholder="Ej: García Martínez"
           />
-        </div>
-
-        <div className="cliente-form__row">
-          <Input
-            label="DNI/NIE *"
-            value={formData.dni}
-            onChange={(e) => handleChange('dni', e.target.value)}
-            error={errors.dni}
-            fullWidth
-            placeholder="Ej: 12345678A"
-          />
-        </div>
+        )}
+        
+        <Input
+          label={formData.tipoCliente === 'Empresa' ? 'CIF *' : 'DNI/NIE *'}
+          value={formData.dni}
+          onChange={(e) => handleChange('dni', e.target.value)}
+          error={errors.dni}
+          fullWidth
+          placeholder={formData.tipoCliente === 'Empresa' ? 'Ej: B12345678' : 'Ej: 12345678A'}
+        />
       </div>
 
       <div className="cliente-form__section">
@@ -146,7 +231,6 @@ export const ClienteForm: React.FC<ClienteFormProps> = ({
         <div className="cliente-form__row">
           <Input
             label="Teléfono *"
-            type="tel"
             value={formData.telefono}
             onChange={(e) => handleChange('telefono', e.target.value)}
             error={errors.telefono}
@@ -194,29 +278,7 @@ export const ClienteForm: React.FC<ClienteFormProps> = ({
             onChange={(e) => handleChange('poblacion', e.target.value)}
             error={errors.poblacion}
             fullWidth
-            placeholder="Ej: Ciudad Real"
-          />
-          
-          <Select
-            label="Provincia *"
-            value={formData.provincia}
-            onChange={(e) => handleChange('provincia', e.target.value)}
-            error={errors.provincia}
-            fullWidth
-            options={[
-              { value: '', label: 'Seleccionar provincia' },
-              ...provinciasEspana.map(p => ({ value: p, label: p }))
-            ]}
-          />
-        </div>
-
-        <div className="cliente-form__row">
-          <Input
-            label="Comunidad Autónoma"
-            value={formData.comunidadAutonoma}
-            onChange={(e) => handleChange('comunidadAutonoma', e.target.value)}
-            fullWidth
-            placeholder="Ej: Castilla-La Mancha"
+            placeholder="Ej: Sevilla"
           />
           
           <Input
@@ -224,33 +286,70 @@ export const ClienteForm: React.FC<ClienteFormProps> = ({
             value={formData.codigoPostal}
             onChange={(e) => handleChange('codigoPostal', e.target.value)}
             fullWidth
-            placeholder="Ej: 13001"
-            maxLength={5}
+            placeholder="Ej: 41001"
+          />
+        </div>
+        
+        <div className="cliente-form__row">
+          <Select
+            label="Provincia *"
+            value={formData.provincia}
+            onChange={(e) => handleChange('provincia', e.target.value)}
+            error={errors.provincia}
+            fullWidth
+            options={[
+              { value: '', label: 'Selecciona una provincia' },
+              ...PROVINCIAS.map(p => ({ value: p, label: p }))
+            ]}
+          />
+          
+          <Select
+            label="Comunidad Autónoma *"
+            value={formData.comunidadAutonoma}
+            onChange={(e) => handleChange('comunidadAutonoma', e.target.value)}
+            error={errors.comunidadAutonoma}
+            fullWidth
+            options={[
+              { value: '', label: 'Selecciona una comunidad' },
+              ...COMUNIDADES_AUTONOMAS.map(ca => ({ value: ca, label: ca }))
+            ]}
           />
         </div>
       </div>
 
       <div className="cliente-form__section">
-        <h3 className="cliente-form__section-title">Información Adicional</h3>
+        <h3 className="cliente-form__section-title">Asignación y Estado</h3>
+        
+        <div className="cliente-form__row">
+          <Input
+            label="Técnico Asignado"
+            value={formData.tecnicoAsignado}
+            onChange={(e) => handleChange('tecnicoAsignado', e.target.value)}
+            fullWidth
+            placeholder="Nombre del técnico"
+            helperText="Deja vacío si no tiene técnico asignado"
+          />
+          
+          <div className="cliente-form__checkbox">
+            <label>
+              <input
+                type="checkbox"
+                checked={formData.activo}
+                onChange={(e) => handleChange('activo', e.target.checked)}
+              />
+              <span>Cliente activo</span>
+            </label>
+          </div>
+        </div>
         
         <Textarea
           label="Notas"
           value={formData.notas}
           onChange={(e) => handleChange('notas', e.target.value)}
           fullWidth
-          rows={4}
-          placeholder="Observaciones, preferencias, etc..."
+          rows={3}
+          placeholder="Observaciones adicionales sobre el cliente..."
         />
-
-        <div className="cliente-form__checkbox">
-          <input
-            type="checkbox"
-            id="activo"
-            checked={formData.activo}
-            onChange={(e) => handleChange('activo', e.target.checked)}
-          />
-          <label htmlFor="activo">Cliente activo</label>
-        </div>
       </div>
 
       <div className="cliente-form__actions">

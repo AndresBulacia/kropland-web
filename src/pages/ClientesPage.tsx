@@ -15,19 +15,36 @@ export const ClientesPage: React.FC = () => {
     crearCliente,
     actualizarCliente,
     eliminarCliente,
-    filtrarClientes,
     importarDesdeCSV
   } = useClientes();
 
   const [busqueda, setBusqueda] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState<'todos' | 'Activo' | 'Potencial'>('todos');
+  const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activos' | 'inactivos'>('todos');
   const [modalAbierto, setModalAbierto] = useState(false);
   const [clienteEditando, setClienteEditando] = useState<Cliente | undefined>();
   const [mostrarImportar, setMostrarImportar] = useState(false);
 
-  // Filtrar clientes basado en la búsqueda
+  // Filtrar clientes basado en búsqueda, tipo y estado
   const clientesFiltrados = useMemo(() => {
-    return filtrarClientes({ busqueda });
-  }, [clientes, busqueda]);
+    return clientes.filter(cliente => {
+      const cumpleBusqueda = 
+        cliente.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+        cliente.apellidos.toLowerCase().includes(busqueda.toLowerCase()) ||
+        cliente.email.toLowerCase().includes(busqueda.toLowerCase()) ||
+        cliente.telefono.includes(busqueda) ||
+        cliente.dni.toLowerCase().includes(busqueda.toLowerCase());
+      
+      const cumpleEstado = 
+        filtroEstado === 'todos' || 
+        (filtroEstado === 'activos' && cliente.activo) ||
+        (filtroEstado === 'inactivos' && !cliente.activo);
+      
+      const cumpleTipo = filtroTipo === 'todos' || cliente.tipo === filtroTipo;
+      
+      return cumpleBusqueda && cumpleEstado && cumpleTipo;
+    });
+  }, [clientes, busqueda, filtroEstado, filtroTipo]);
 
   const handleNuevoCliente = () => {
     setClienteEditando(undefined);
@@ -38,6 +55,7 @@ export const ClientesPage: React.FC = () => {
     setClienteEditando(cliente);
     setModalAbierto(true);
   };
+
 
   const handleSubmitForm = (data: Omit<Cliente, 'id' | 'fechaAlta'>) => {
     if (clienteEditando) {
@@ -131,7 +149,7 @@ export const ClientesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Barra de búsqueda y estadísticas */}
+      {/* Barra de búsqueda */}
       <div className="clientes-page__toolbar">
         <SearchBar
           value={busqueda}
@@ -139,14 +157,66 @@ export const ClientesPage: React.FC = () => {
           placeholder="Buscar por nombre, DNI, email o teléfono..."
           fullWidth
         />
-        
-        <div className="clientes-page__stats">
-          <div className="clientes-page__stat">
-            <span className="clientes-page__stat-value">{clientesFiltrados.length}</span>
-            <span className="clientes-page__stat-label">
-              {clientesFiltrados.length === 1 ? 'Cliente' : 'Clientes'}
-            </span>
+      </div>
+
+      {/* Filtros */}
+      <div className="clientes-page__filters">
+        <div className="filter-group">
+          <label>Tipo de Cliente</label>
+          <div className="filter-buttons">
+            <button
+              className={`filter-button ${filtroTipo === 'todos' ? 'active' : ''}`}
+              onClick={() => setFiltroTipo('todos')}
+            >
+              Todos ({clientes.length})
+            </button>
+            <button
+              className={`filter-button ${filtroTipo === 'Activo' ? 'active' : ''}`}
+              onClick={() => setFiltroTipo('Activo')}
+            >
+              Activos ({clientes.filter(c => c.tipo === 'Activo').length})
+            </button>
+            <button
+              className={`filter-button ${filtroTipo === 'Potencial' ? 'active' : ''}`}
+              onClick={() => setFiltroTipo('Potencial')}
+            >
+              Potenciales ({clientes.filter(c => c.tipo === 'Potencial').length})
+            </button>
           </div>
+        </div>
+
+        <div className="filter-group">
+          <label>Estado</label>
+          <div className="filter-buttons">
+            <button
+              className={`filter-button ${filtroEstado === 'todos' ? 'active' : ''}`}
+              onClick={() => setFiltroEstado('todos')}
+            >
+              Todos
+            </button>
+            <button
+              className={`filter-button ${filtroEstado === 'activos' ? 'active' : ''}`}
+              onClick={() => setFiltroEstado('activos')}
+            >
+              Activos
+            </button>
+            <button
+              className={`filter-button ${filtroEstado === 'inactivos' ? 'active' : ''}`}
+              onClick={() => setFiltroEstado('inactivos')}
+            >
+              Inactivos
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Estadísticas */}
+      <div className="clientes-page__stats">
+        <div className="clientes-page__stat">
+          <span className="clientes-page__stat-value">{clientesFiltrados.length}</span>
+          <span className="clientes-page__stat-label">
+            {clientesFiltrados.length === 1 ? 'Cliente encontrado' : 'Clientes encontrados'}
+          </span>
         </div>
       </div>
 
@@ -158,11 +228,11 @@ export const ClientesPage: React.FC = () => {
           </svg>
           <h3>No hay clientes</h3>
           <p>
-            {busqueda
+            {busqueda || filtroTipo !== 'todos' || filtroEstado !== 'todos'
               ? 'No se encontraron clientes con esos criterios'
               : 'Comienza añadiendo tu primer cliente'}
           </p>
-          {!busqueda && (
+          {!busqueda && filtroTipo === 'todos' && filtroEstado === 'todos' && (
             <Button variant="primary" onClick={handleNuevoCliente}>
               Añadir primer cliente
             </Button>

@@ -19,7 +19,7 @@ export const useActividades = () => {
         const actividadesEjemplo: Actividad[] = [
           {
             id: '1',
-            fincaId: '1',
+            fincaId: '2',
             tipo: 'Poda',
             descripcion: 'Poda de formación en olivos',
             fecha: '2025-10-15',

@@ -82,3 +82,42 @@
     width: 100%;
   }
 }
+
+/* Badges */
+.cliente-card__badges {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+  margin-top: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+/* Mejorar responsividad */
+@media (max-width: 640px) {
+  .cliente-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .cliente-card__avatar {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .cliente-card__avatar svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .cliente-card__badges {
+    margin-top: var(--spacing-sm);
+  }
+  
+  .cliente-card__actions {
+    flex-direction: column;
+  }
+  
+  .cliente-card__actions > button {
+    width: 100%;
+  }
+}

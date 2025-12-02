@@ -81,9 +81,16 @@ export const ClienteDetailPage: React.FC = () => {
           <div className="cliente-header__info">
             <div className="cliente-header__title">
               <h1>{cliente.nombre} {cliente.apellidos}</h1>
-              <Badge variant={cliente.activo ? 'success' : 'neutral'}>
-                {cliente.activo ? 'Activo' : 'Inactivo'}
-              </Badge>
+              <Badge 
+                  variant={cliente.tipo === 'Activo' ? 'success' : 'warning'}
+                  size="sm"
+                >
+                  {cliente.tipo === 'Activo' ? 'Activo' : 'Potencial'}
+                </Badge>
+
+                {!cliente.activo && (
+                  <Badge variant="error" size="sm">Inactivo</Badge>
+                )}
             </div>
             
             <div className="cliente-header__details">

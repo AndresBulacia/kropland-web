@@ -11,7 +11,6 @@ import { ActivityList } from '../components/common/ActivityList';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
-import type { Visita } from '../types';
 import './InicioPage.css';
 
 export const InicioPage: React.FC = () => {
@@ -175,7 +174,7 @@ export const InicioPage: React.FC = () => {
             </svg>
           }
           color="secondary"
-          onClick={() => navigate('/fincas')}
+          onClick={() => navigate('/clientes')}
         />
 
         <StatCard
