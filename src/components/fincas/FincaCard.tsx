@@ -9,7 +9,8 @@ import './FincaCard.css';
 interface FincaCardProps {
   finca: Finca;
   onEdit: (finca: Finca) => void;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onView?: (finca: Finca) => void;
 }
 
 export const FincaCard: React.FC<FincaCardProps> = ({
@@ -19,22 +20,23 @@ export const FincaCard: React.FC<FincaCardProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const handleCardClick = () => {
-    navigate(`/fincas/${finca.id}`);
-  };
-
+  
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onEdit(finca);
+    if (onEdit) onEdit(finca);
   };
-
+  
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm(`¿Estás seguro de eliminar la finca "${finca.nombre}"?`)) {
       onDelete(finca.id);
     }
   };
-
+  
+  const handleCardClick = () => {
+    navigate(`/fincas/${finca.id}`);
+  };
+  
   const getCultivoColor = (cultivo: string) => {
     const colors: Record<string, string> = {
       'Olivo': '#193C1E',
@@ -63,12 +65,31 @@ export const FincaCard: React.FC<FincaCardProps> = ({
           
           <div className="finca-card__info">
             <h3 className="finca-card__name">{finca.nombre}</h3>
-            <p className="finca-card__cultivo">{finca.cultivo} - {finca.variedad}</p>
+            <div className="finca-card__badges">
+              <Badge variant='info' size='sm'>
+                {finca.cultivo}
+              </Badge>
+              {finca.variedad && (
+                <Badge variant='info' size='sm'>
+                  {finca.variedad}
+                </Badge>
+              )}
+            </div>
           </div>
           
           <Badge variant={finca.activa ? 'success' : 'neutral'}>
             {finca.activa ? 'Activa' : 'Inactiva'}
           </Badge>
+        </div>
+        <div className="finca-card__header">
+          {finca.tecnicoAsignado && (
+            <div className="finca-card__detail finca-card__detail--highlight">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span><strong>Técnico:</strong> {finca.tecnicoAsignado}</span>
+            </div>
+          )}
         </div>
 
         {/* Detalles principales */}
@@ -77,22 +98,26 @@ export const FincaCard: React.FC<FincaCardProps> = ({
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
             </svg>
-            <span><strong>{finca.superficie} ha</strong></span>
+            <span>{finca.superficie.toFixed(2)} ha</span>
           </div>
+
+          {finca.tipoRiego && (
+            <div className="finca-card__detail">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+              <span>{finca.tipoRiego}</span>
+            </div>
+          )}
           
-          <div className="finca-card__detail">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Plantación {finca.añoPlantacion || 'N/A'}</span>
-          </div>
-          
-          <div className="finca-card__detail">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-            </svg>
-            <span>{finca.tipoRiego}</span>
-          </div>
+          {finca.añoPlantacion && (
+            <div className="finca-card__detail">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>Plantación: {finca.añoPlantacion}</span>
+            </div>
+          )}
 
           {finca.volumenCaldoPorHa && (
             <div className="finca-card__detail">
@@ -105,15 +130,15 @@ export const FincaCard: React.FC<FincaCardProps> = ({
         </div>
 
         {/* Ubicación */}
-        {finca.ubicacion.direccion && (
-          <div className="finca-card__ubicacion">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span>{finca.ubicacion.direccion}</span>
-          </div>
-        )}
+        {finca.ubicacion?.direccion && (
+            <div className="finca-card__detail">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>{finca.ubicacion.direccion}</span>
+            </div>
+          )}
 
         {/* Acciones */}
         <div className="finca-card__actions">

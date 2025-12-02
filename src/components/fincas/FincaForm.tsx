@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
-import type { Finca, TipoCultivo, TipoRiego } from '../../types';
+import type { Finca, TipoRiego } from '../../types';
 import { Input, Select, Textarea } from '../common/Input';
 import { Button } from '../common/Button';
-import { useFincas } from '../../hooks/useFincas';
 import './FincaForm.css';
 
 interface FincaFormProps {
   finca?: Finca;
   clienteId: string;
-  onSubmit: () => void;
+  onSubmit: (data: Omit<Finca, 'id' | 'fechaCreacion'>) => void;
   onCancel: () => void;
 }
 
-const cultivosOptions: TipoCultivo[] = [
+const cultivosDisponibles = [
   'Olivo',
   'Viña',
   'Almendro',
@@ -23,27 +22,41 @@ const cultivosOptions: TipoCultivo[] = [
   'Otro'
 ];
 
+const tiposRiego = [
+  'Secano',
+  'Regadío',
+  'Goteo',
+  'Aspersión'
+]
+
+const tecnicosDisponibles = [
+  'Raquel Romero Peces',
+  'Juan Jose Vilar Llido',
+  'Javier Lengua Alvaro',
+  'Daniel Gonzalez Romera'
+]
+
 export const FincaForm: React.FC<FincaFormProps> = ({
   finca,
   clienteId,
   onSubmit,
   onCancel
 }) => {
-  const { crearFinca, actualizarFinca } = useFincas();
   
   const [formData, setFormData] = useState({
     nombre: finca?.nombre || '',
-    cultivo: finca?.cultivo || 'Olivo' as TipoCultivo,
+    cultivo: finca?.cultivo || 'Olivo',
     variedad: finca?.variedad || '',
     portainjerto: finca?.portainjerto || '',
     superficie: finca?.superficie?.toString() || '',
     volumenCaldoPorHa: finca?.volumenCaldoPorHa?.toString() || '',
     añoPlantacion: finca?.añoPlantacion?.toString() || '',
-    tipoRiego: finca?.tipoRiego || 'Regadío' as TipoRiego,
+    tipoRiego: finca?.tipoRiego || 'Secano',
     direccion: finca?.ubicacion?.direccion || '',
     latitud: finca?.ubicacion?.latitud?.toString() || '',
     longitud: finca?.ubicacion?.longitud?.toString() || '',
     notas: finca?.notas || '',
+    tecnicoAsignado: finca?.tecnicoAsignado || '',
     activa: finca?.activa ?? true
   });
 
@@ -67,9 +80,6 @@ export const FincaForm: React.FC<FincaFormProps> = ({
     if (!formData.nombre.trim()) {
       newErrors.nombre = 'El nombre es obligatorio';
     }
-    if (!formData.variedad.trim()) {
-      newErrors.variedad = 'La variedad es obligatoria';
-    }
     if (!formData.superficie || parseFloat(formData.superficie) <= 0) {
       newErrors.superficie = 'La superficie debe ser mayor a 0';
     }
@@ -91,30 +101,27 @@ export const FincaForm: React.FC<FincaFormProps> = ({
       clienteId,
       nombre: formData.nombre,
       cultivo: formData.cultivo,
-      variedad: formData.variedad,
+      variedad: formData.variedad || undefined,
       portainjerto: formData.portainjerto || undefined,
       superficie: parseFloat(formData.superficie),
       volumenCaldoPorHa: formData.volumenCaldoPorHa ? parseFloat(formData.volumenCaldoPorHa) : undefined,
       añoPlantacion: formData.añoPlantacion ? parseInt(formData.añoPlantacion) : undefined,
-      tipoRiego: formData.tipoRiego,
-      ubicacion: {
+      tipoRiego: formData.tipoRiego as Finca[TipoRiego],
+      ubicacion: (formData.direccion || formData.latitud || formData.longitud) ? {
         direccion: formData.direccion || undefined,
         latitud: formData.latitud ? parseFloat(formData.latitud) : undefined,
         longitud: formData.longitud ? parseFloat(formData.longitud) : undefined,
-      },
+      } : undefined,
       notas: formData.notas || undefined,
+      tecnicoAsignado: formData.tecnicoAsignado || undefined,
       activa: formData.activa
     };
 
     setTimeout(() => {
-      if (finca) {
-        actualizarFinca(finca.id, fincaData);
-      } else {
-        crearFinca(fincaData);
-      }
+      onSubmit(fincaData);
       setLoading(false);
-      onSubmit();
     }, 500);
+      
   };
 
   return (
@@ -139,13 +146,11 @@ export const FincaForm: React.FC<FincaFormProps> = ({
             value={formData.cultivo}
             onChange={(e) => handleChange('cultivo', e.target.value)}
             fullWidth
-            options={[
-              ...cultivosOptions.map(c => ({ value: c, label: c }))
-            ]}
+            options={cultivosDisponibles.map(c => ({value: c, label: c}))}
           />
           
           <Input
-            label="Variedad *"
+            label="Variedad"
             value={formData.variedad}
             onChange={(e) => handleChange('variedad', e.target.value)}
             error={errors.variedad}
@@ -154,7 +159,6 @@ export const FincaForm: React.FC<FincaFormProps> = ({
           />
         </div>
 
-        <div className="finca-form__row">
           <Input
             label="Portainjerto"
             value={formData.portainjerto}
@@ -162,7 +166,6 @@ export const FincaForm: React.FC<FincaFormProps> = ({
             fullWidth
             placeholder="Opcional"
           />
-        </div>
       </div>
 
       <div className="finca-form__section">
@@ -208,10 +211,7 @@ export const FincaForm: React.FC<FincaFormProps> = ({
             value={formData.tipoRiego}
             onChange={(e) => handleChange('tipoRiego', e.target.value)}
             fullWidth
-            options={[
-              { value: 'Regadío', label: 'Regadío' },
-              { value: 'Secano', label: 'Secano' }
-            ]}
+            options={tiposRiego.map(r => ({value: r, label: r}))}
           />
         </div>
       </div>
@@ -224,7 +224,7 @@ export const FincaForm: React.FC<FincaFormProps> = ({
           value={formData.direccion}
           onChange={(e) => handleChange('direccion', e.target.value)}
           fullWidth
-          placeholder="Ej: Camino de la Vega, Ciudad Real"
+          placeholder="Ej: Paraje Los Olivos, s/n"
         />
         
         <div className="finca-form__row">
@@ -259,16 +259,17 @@ export const FincaForm: React.FC<FincaFormProps> = ({
 
       <div className="finca-form__section">
         <h3 className="finca-form__section-title">Información Adicional</h3>
-        
-        <Textarea
-          label="Notas"
-          value={formData.notas}
-          onChange={(e) => handleChange('notas', e.target.value)}
-          fullWidth
-          rows={4}
-          placeholder="Observaciones, certificaciones, características especiales..."
-        />
 
+        <div className="finca-form__row">
+          <Select
+            label="Técnico Asignado"
+            value={formData.tecnicoAsignado}
+            onChange={(e) => handleChange('tecnicoAsignado', e.target.value)}
+            fullWidth
+            options={tecnicosDisponibles.map(t => ({value: t, label: t}))}
+          />
+        </div>
+        
         <div className="finca-form__checkbox">
           <input
             type="checkbox"
@@ -278,6 +279,16 @@ export const FincaForm: React.FC<FincaFormProps> = ({
           />
           <label htmlFor="activa">Finca activa</label>
         </div>
+
+        <Textarea
+          label="Notas"
+          value={formData.notas}
+          onChange={(e) => handleChange('notas', e.target.value)}
+          fullWidth
+          rows={4}
+          placeholder="Observaciones, certificaciones, características especiales..."
+        />
+
       </div>
 
       <div className="finca-form__actions">
