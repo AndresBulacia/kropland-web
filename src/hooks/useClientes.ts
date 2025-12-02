@@ -159,7 +159,8 @@ export const useClientes = () => {
               direccion: columnas[9],
               notas: columnas[10],
               fechaAlta: new Date().toISOString().split('T')[0],
-              activo: true
+              activo: true,
+              tipo: 'Activo'
             };
             clientesNuevos.push(cliente);
           } catch {

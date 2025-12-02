@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Visita } from '../../types';
+import type { Visita, ProductoAplicado, TipoProducto } from '../../types';
 import { Input, Select, Textarea } from '../common/Input';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
@@ -28,10 +28,11 @@ const actividadesDisponibles = [
   'Otro'
 ];
 
-const tiposProducto = [
+const tiposProducto: TipoProducto[] = [
   'Fitosanitario',
   'Herbicida',
   'Abono',
+  'Nutricional',
   'Otro'
 ];
 
@@ -62,12 +63,9 @@ export const VisitaFormCompleto: React.FC<VisitaFormCompletoProps> = ({
     proximaVisita: visita?.proximaVisita || '',
   });
 
-  const [productos, setProductos] = useState<Array<{
-    tipo: string;
-    nombre: string;
-    dosis: string;
-    unidad: string;
-  }>>(visita?.productosAplicados || []);
+  const [productos, setProductos] = useState<ProductoAplicado[]>(
+    visita?.productosAplicados || []
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -107,7 +105,7 @@ export const VisitaFormCompleto: React.FC<VisitaFormCompletoProps> = ({
 
   const agregarProducto = () => {
     setProductos(prev => [...prev, {
-      tipo: 'Fitosanitario',
+      tipo: 'Fitosanitario' as TipoProducto,
       nombre: '',
       dosis: '',
       unidad: 'L/ha'

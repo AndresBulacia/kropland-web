@@ -15,7 +15,8 @@ export const DEMO_CLIENTES: Cliente[] = [
     direccion: 'Calle Principal 123',
     notas: 'Cliente desde 2020',
     fechaAlta: '2020-01-15',
-    activo: true
+    activo: true,
+    tipo: 'Activo'
   },
   {
     id: '2',
@@ -30,7 +31,8 @@ export const DEMO_CLIENTES: Cliente[] = [
     codigoPostal: '23001',
     direccion: 'Avenida Andalucía 45',
     fechaAlta: '2021-03-20',
-    activo: true
+    activo: true,
+    tipo: 'Activo'
   },
   {
     id: '3',
@@ -45,7 +47,8 @@ export const DEMO_CLIENTES: Cliente[] = [
     codigoPostal: '14001',
     notas: 'Prefiere comunicación por email',
     fechaAlta: '2019-11-10',
-    activo: true
+    activo: true,
+    tipo: 'Potencial'
   }
 ];
 

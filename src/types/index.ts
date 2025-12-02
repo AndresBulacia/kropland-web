@@ -43,7 +43,11 @@ export type TipoCultivo =
   | 'Hortícola'
   | 'Otro';
 
-export type TipoRiego = 'Regadío' | 'Secano';
+export type TipoRiego = 
+| 'Secano'
+| 'Regadío'
+| 'Goteo'
+| 'Aspersión';
 
 export interface Finca {
   id: string;
@@ -93,12 +97,14 @@ export interface Actividad {
   fechaCreacion: string;
 }
 
+export type TipoProducto = 'Fitosanitario' | 'Herbicida' | 'Abono' | 'Nutricional' | 'Otro';
+
 export interface ProductoAplicado {
   nombre: string;
   dosis: string;
   unidad: string;
   plazoSeguridad?: number;
-  tipo: 'Fitosanitario' | 'Nutricional' | 'Herbicida' | 'Otro';
+  tipo: TipoProducto;
 }
 
 export interface Visita {

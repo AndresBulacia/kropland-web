@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Finca, TipoRiego } from '../../types';
+import type { Finca } from '../../types';
 import { Input, Select, Textarea } from '../common/Input';
 import { Button } from '../common/Button';
 import './FincaForm.css';
@@ -106,7 +106,7 @@ export const FincaForm: React.FC<FincaFormProps> = ({
       superficie: parseFloat(formData.superficie),
       volumenCaldoPorHa: formData.volumenCaldoPorHa ? parseFloat(formData.volumenCaldoPorHa) : undefined,
       añoPlantacion: formData.añoPlantacion ? parseInt(formData.añoPlantacion) : undefined,
-      tipoRiego: formData.tipoRiego as Finca[TipoRiego],
+      tipoRiego: formData.tipoRiego as 'Secano' | 'Regadío' | 'Goteo' | 'Aspersión' | undefined,
       ubicacion: (formData.direccion || formData.latitud || formData.longitud) ? {
         direccion: formData.direccion || undefined,
         latitud: formData.latitud ? parseFloat(formData.latitud) : undefined,
