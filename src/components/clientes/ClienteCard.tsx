@@ -10,7 +10,7 @@ interface ClienteCardProps {
   cliente: Cliente;
   onEdit: (cliente: Cliente) => void;
   onDelete: (id: string) => void;
-  onView?: (cliente: Cliente) => void; // Opcional
+  onView?: (cliente: Cliente) => void;
 }
 
 export const ClienteCard: React.FC<ClienteCardProps> = ({
@@ -36,7 +36,10 @@ export const ClienteCard: React.FC<ClienteCardProps> = ({
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm(`¿Estás seguro de eliminar a ${cliente.nombre} ${cliente.apellidos}?`)) {
+    const nombreCompleto = cliente.apellidos
+    ? `${cliente.nombre} ${cliente.apellidos}`
+    : cliente.nombre;
+    if (window.confirm(`¿Estás seguro de eliminar a ${nombreCompleto}?`)) {
       onDelete(cliente.id);
     }
   };
@@ -77,12 +80,32 @@ export const ClienteCard: React.FC<ClienteCardProps> = ({
                   Inactivo
                 </Badge>
               )}
+
+              {cliente.tipoCliente === 'Empresa' && (
+                <Badge variant='info' size='sm'>
+                  Empresa
+                </Badge>
+              )}
+
+              {cliente.tipoCliente === 'Particular' && (
+                <Badge variant='info' size='sm'>
+                  Particular
+                </Badge>
+              )}
             </div>
           </div>
         </div>
 
         {/* Información de contacto */}
         <div className="cliente-card__details">
+          {cliente.tecnicoAsignado && (
+            <div className="cliente-card__detail cliente-card__detail--highlight">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span><strong>Técnico:</strong> {cliente.tecnicoAsignado}</span>
+            </div>
+          )}
           <div className="cliente-card__detail">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

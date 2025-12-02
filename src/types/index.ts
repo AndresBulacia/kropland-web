@@ -64,6 +64,7 @@ export interface Finca {
   notas?: string;
   fechaCreacion: string;
   activa: boolean;
+  tecnicoAsignado?: string;
 }
 
 export type TipoActividad = 

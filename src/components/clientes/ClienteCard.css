@@ -121,3 +121,15 @@
     width: 100%;
   }
 }
+
+.cliente-card__detail--highlight {
+  background-color: var(--color-bg-secondary);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-secondary);
+}
+
+.cliente-card__detail--highlight strong {
+  color: var(--color-secondary);
+  font-weight: var(--font-weight-semibold);
+}

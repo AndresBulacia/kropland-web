@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useClientes } from '../hooks/useClientes';
 import type { Cliente } from '../types';
 import { SearchBar } from '../components/common/SearchBar';
@@ -9,6 +10,7 @@ import { ClienteForm } from '../components/clientes/ClienteForm';
 import './ClientesPage.css';
 
 export const ClientesPage: React.FC = () => {
+  const navigate = useNavigate();
   const {
     clientes,
     loading,
@@ -21,16 +23,28 @@ export const ClientesPage: React.FC = () => {
   const [busqueda, setBusqueda] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'todos' | 'Activo' | 'Potencial'>('todos');
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activos' | 'inactivos'>('todos');
+  const [filtroTecnico, setFiltroTecnico] = useState<string>('todos');
   const [modalAbierto, setModalAbierto] = useState(false);
   const [clienteEditando, setClienteEditando] = useState<Cliente | undefined>();
   const [mostrarImportar, setMostrarImportar] = useState(false);
+
+  // Obtener lista unica de tecnicos asignados
+  const tecnicos = useMemo(() => {
+    const tecnicosUnicos = new Set<string>();
+    clientes.forEach(c => {
+      if (c.tecnicoAsignado) {
+        tecnicosUnicos.add(c.tecnicoAsignado);
+      }
+    });
+    return Array.from(tecnicosUnicos).sort();
+  }, [clientes]);
 
   // Filtrar clientes basado en búsqueda, tipo y estado
   const clientesFiltrados = useMemo(() => {
     return clientes.filter(cliente => {
       const cumpleBusqueda = 
         cliente.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-        cliente.apellidos.toLowerCase().includes(busqueda.toLowerCase()) ||
+        (cliente.apellidos?.toLowerCase().includes(busqueda.toLowerCase()) || false) ||
         cliente.email.toLowerCase().includes(busqueda.toLowerCase()) ||
         cliente.telefono.includes(busqueda) ||
         cliente.dni.toLowerCase().includes(busqueda.toLowerCase());
@@ -41,10 +55,15 @@ export const ClientesPage: React.FC = () => {
         (filtroEstado === 'inactivos' && !cliente.activo);
       
       const cumpleTipo = filtroTipo === 'todos' || cliente.tipo === filtroTipo;
+
+      const cumpleTecnico =
+      filtroTecnico === 'todos' ||
+      (filtroTecnico === 'sin-asignar' && !cliente.tecnicoAsignado) ||
+      cliente.tecnicoAsignado === filtroTecnico;
       
-      return cumpleBusqueda && cumpleEstado && cumpleTipo;
+      return cumpleBusqueda && cumpleEstado && cumpleTipo && cumpleTecnico;
     });
-  }, [clientes, busqueda, filtroEstado, filtroTipo]);
+  }, [clientes, busqueda, filtroEstado, filtroTipo, filtroTecnico]);
 
   const handleNuevoCliente = () => {
     setClienteEditando(undefined);
@@ -56,6 +75,9 @@ export const ClientesPage: React.FC = () => {
     setModalAbierto(true);
   };
 
+  const handleVerDetalle = (cliente: Cliente) => {
+    navigate(`/clientes/${cliente.id}`);
+  }
 
   const handleSubmitForm = (data: Omit<Cliente, 'id' | 'fechaAlta'>) => {
     if (clienteEditando) {
@@ -208,6 +230,35 @@ export const ClientesPage: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Filtro por técnico */}
+        <div className="filter-group">
+          <label>Técnico Asignado</label>
+          <div className="filter-buttons">
+            <button
+              className={`filter-button ${filtroTecnico === 'todos' ? 'active' : ''}`}
+              onClick={() => setFiltroTecnico('todos')}
+            >
+              Todos
+            </button>
+
+            <button
+              className={`filter-button ${filtroTecnico === 'sin-asignar' ? 'active' : ''}`}
+              onClick={() => setFiltroTecnico('sin-asignar')}
+            >
+              Sin asignar ({clientes.filter(c => !c.tecnicoAsignado).length})
+            </button>
+            {tecnicos.map(tecnico => (
+              <button
+                key={tecnico}
+                className={`filter-button ${filtroTecnico === tecnico ? 'active' : ''}`}
+                onClick={() => setFiltroTecnico(tecnico)}
+              >
+                {tecnico} ({clientes.filter(c => c.tecnicoAsignado === tecnico).length})
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Estadísticas */}
@@ -246,6 +297,7 @@ export const ClientesPage: React.FC = () => {
               cliente={cliente}
               onEdit={handleEditarCliente}
               onDelete={eliminarCliente}
+              onView={handleVerDetalle}
             />
           ))}
         </div>
